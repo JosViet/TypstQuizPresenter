@@ -1,0 +1,9 @@
+{
+  "repository": "JosViet/BienSoanTypst",
+  "commit": "821eae9fc6fa399ec02f260f74cef331e6c11540",
+  "rootFiles": [
+    "de-thi.typ",
+    "vietdoc.typ"
+  ],
+  "notes": "Pinned read-only upstream runtime. Update intentionally after compatibility tests."
+}
