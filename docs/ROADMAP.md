@@ -1,34 +1,38 @@
 # Roadmap
 
-## V1 — Teacher Presenter
+## V0.2 — Local-first classroom mode
 
-- [x] Parser foundation
-- [x] Upstream pinned runtime manifest
-- [x] Browser Typst renderer adapter
-- [x] GitHub source-path loading
-- [x] Fullscreen presenter shell
-- [x] Answer/solution reveal
-- [x] 30pt minimum font rule
-- [ ] Confirm WASM works inside ChatGPT Sites runtime/CSP
-- [ ] Test CeTZ-heavy fixture
-- [ ] Test images and nested includes
-- [ ] Self-host WASM/runtime assets for classroom reliability
+- [x] Local workspace picker
+- [x] Validate `de-thi.typ` and `vietdoc.typ`
+- [x] Remember recent workspace handle in IndexedDB
+- [x] Searchable local `.typ` catalog
+- [x] Load selected source directly from disk
+- [x] Resolve runtime/dependencies from local workspace
+- [x] Keep GitHub provider only as dev/demo fallback
+- [x] Document privacy boundary
+- [ ] Browser build smoke test with installed dependencies
+- [ ] Real source test: `Toan10/dataTN/0C1-B1.typ`
+- [ ] Image dependency test
+- [ ] CeTZ-heavy source test
 
-## V1.1 — Classroom polish
+## V0.3 — Classroom polish
 
-- keyboard shortcuts;
-- countdown presets;
-- random question selection;
-- optional answer shuffle with correctness remap;
-- recently used quiz sets;
 - auto-fit 44→40→36→34→32→30, never below 30;
-- "question too long" split/scroll warning.
+- question selection before presentation;
+- random N questions;
+- tag filtering;
+- optional answer shuffle with correctness remap;
+- recent source files;
+- explicit overflow warning.
+
+## V1 — Stable hosted presenter
+
+- automated static hosting;
+- self-host WASM assets;
+- offline/app-cache strategy;
+- deployment smoke tests;
+- classroom reliability checklist.
 
 ## V2 — Student participation
 
-Deferred until V1 is stable:
-- room code;
-- student phone responses;
-- live response histogram;
-- team mode;
-- persistent session summaries.
+Deferred until presenter is stable: room code, phone responses, response histogram, team mode and session summaries.

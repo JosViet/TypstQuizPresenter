@@ -1,48 +1,69 @@
 # Typst Quiz Presenter
 
-A teacher-led classroom quiz presenter that consumes question sources authored in Typst and renders them with the **real Typst runtime** used by `JosViet/BienSoanTypst`.
+A teacher-led classroom quiz presenter for question banks authored in Typst.
+
+## Privacy-first architecture (v0.2)
+
+The production/classroom workflow is **local-first**:
+
+```text
+Public/static web app shell
+        ↓
+Teacher chooses local BienSoanTypst folder
+        ↓
+Browser receives read-only directory access
+        ↓
+de-thi.typ + vietdoc.typ + assets + selected .typ
+are read locally in the browser
+        ↓
+Typst WASM compiles to SVG
+```
+
+The exercise bank is **not uploaded to the host** and is not bundled into the public web app.
+
+The browser may remember the directory handle in IndexedDB so a later session can show “Open recent workspace”. If the browser revoked permission, the user must approve read access again.
 
 ## Why this repository exists
 
 `BienSoanTypst` stays focused on authoring and print/PDF workflows. This repository is a separate consumer application so web runtime code, parser logic, presentation UI, and experiments do not pollute the authoring workspace.
 
-## Core idea
+## Main classroom workflow
 
-```text
-BienSoanTypst source (.typ)
-        ↓
-Nesting-aware quiz parser
-        ↓
-Normalized quiz model
-        ↓
-Typst WASM + pinned upstream libraries
-        ↓
-16:9 teacher presenter (>= 30pt)
-```
+1. Open Typst Quiz Presenter in Chrome/Edge.
+2. Click **Chọn workspace**.
+3. Select the root local folder `BienSoanTypst`.
+4. Filter/select a `.typ` file, for example `Toan10/dataTN/0C1-B1.typ`.
+5. The app parses its quiz questions.
+6. Present fullscreen; Space reveals answer then solution.
 
-The renderer loads the upstream `de-thi.typ`, `vietdoc.typ`, and their transitive assets into the Typst virtual filesystem. HTML controls navigation/timer/reveal; Typst remains authoritative for mathematical typesetting and custom helpers.
+The workspace must contain the real `de-thi.typ` and `vietdoc.typ`. Their dependencies and local images are resolved from the same workspace.
 
-## Supported source syntax (V1)
+## Supported source syntax
 
 - `#ex(...)[ ... ]`
-- `#choice(...)` with `T[...]` marking the correct option
+- `#choice(...)` with `T[...]`
 - `#choiceTF(...)`
 - `#shortanswer(...)`
 - `#loigiai[...]`
-- nested Typst content, math, functions, brackets and helper macros
+- nested Typst content, math, functions, brackets and public helper macros
 
 ## Presentation rules
 
-- teacher-led fullscreen mode;
-- configurable font sizes: 30–44pt;
+- 16:9 teacher-led fullscreen;
+- 30–44pt controls;
 - **30pt hard minimum**;
-- 16:9 viewport;
-- if a question is too long at 30pt, scroll/split rather than shrink further;
-- answer reveal and solution reveal are separate steps.
+- long content scrolls/splits rather than shrinking below 30pt;
+- answer and solution reveal are separate states.
 
-## Upstream pin
+## GitHub mode
 
-See `runtime.upstream.json`. The initial runtime is pinned to a known commit of `JosViet/BienSoanTypst`. Upgrading the pin is an explicit compatibility operation.
+The pinned GitHub loader remains only for development/demo. Classroom use should prefer Local Workspace so the exercise source is never fetched from or published to a public host.
+
+See `runtime.upstream.json` for the dev/demo pin.
+
+## Browser requirements
+
+Local Workspace uses the File System Access API and therefore requires a compatible Chromium browser such as recent Chrome/Edge and a secure context (HTTPS or localhost).
 
 ## Local development
 
@@ -52,17 +73,15 @@ npm test
 npm run dev
 ```
 
-The first Typst WASM load is large. Keep network access available on a cold start unless WASM/font assets are self-hosted later.
-
 ## Current status
 
-`0.1.0` scaffold/MVP foundation:
+`0.2.0`:
 
-- parser implemented and tested;
-- upstream dependency loader implemented;
-- Typst WASM renderer adapter implemented;
-- 16:9 presenter UI implemented;
-- runtime Typst presentation macros implemented;
-- GitHub source-path loading supported.
-
-See `docs/ROADMAP.md` for staged rollout.
+- local workspace picker;
+- workspace validation;
+- recent workspace handle stored in IndexedDB;
+- searchable local `.typ` catalog;
+- runtime/dependency loading from local disk;
+- parser and Typst WASM presenter retained;
+- GitHub loader demoted to dev/demo;
+- exercise bank is not part of the hosted app bundle.
