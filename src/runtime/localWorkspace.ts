@@ -47,10 +47,12 @@ function randomKey(): string {
 }
 
 export class LocalWorkspace {
+  readonly handle: FileSystemDirectoryHandle;
   readonly name: string;
   readonly cacheKey: string;
 
-  constructor(readonly handle: FileSystemDirectoryHandle) {
+  constructor(handle: FileSystemDirectoryHandle) {
+    this.handle = handle;
     this.name = handle.name;
     this.cacheKey = `local:${handle.name}:${randomKey()}`;
   }
