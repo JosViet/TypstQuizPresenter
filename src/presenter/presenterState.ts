@@ -3,6 +3,7 @@ import type { QuizQuestion } from '../model/quiz.ts';
 export interface PresenterSnapshot {
   questions: QuizQuestion[];
   current: number;
+  selectedChoice: number | null;
   revealAnswer: boolean;
   showSolution: boolean;
   fontSize: number;
@@ -16,9 +17,10 @@ export class PresenterState {
   value: PresenterSnapshot = {
     questions: [],
     current: 0,
+    selectedChoice: null,
     revealAnswer: false,
     showSolution: false,
-    fontSize: 34,
+    fontSize: 30,
     timerSeconds: 45,
     timerRemaining: 45,
     timerRunning: false,
@@ -26,12 +28,18 @@ export class PresenterState {
 
   constructor(private onChange: () => void) {}
 
+  private resetQuestionView(): void {
+    this.value.selectedChoice = null;
+    this.value.revealAnswer = false;
+    this.value.showSolution = false;
+    this.value.timerRemaining = this.value.timerSeconds;
+  }
+
   setQuestions(questions: QuizQuestion[]): void {
     this.stopTimer();
     this.value.questions = questions;
     this.value.current = 0;
-    this.value.revealAnswer = false;
-    this.value.showSolution = false;
+    this.resetQuestionView();
     this.onChange();
   }
 
@@ -43,9 +51,7 @@ export class PresenterState {
     if (this.value.current < this.value.questions.length - 1) {
       this.stopTimer();
       this.value.current += 1;
-      this.value.revealAnswer = false;
-      this.value.showSolution = false;
-      this.value.timerRemaining = this.value.timerSeconds;
+      this.resetQuestionView();
       this.onChange();
     }
   }
@@ -54,11 +60,24 @@ export class PresenterState {
     if (this.value.current > 0) {
       this.stopTimer();
       this.value.current -= 1;
-      this.value.revealAnswer = false;
-      this.value.showSolution = false;
-      this.value.timerRemaining = this.value.timerSeconds;
+      this.resetQuestionView();
       this.onChange();
     }
+  }
+
+  goTo(index: number): void {
+    if (index < 0 || index >= this.value.questions.length || index === this.value.current) return;
+    this.stopTimer();
+    this.value.current = index;
+    this.resetQuestionView();
+    this.onChange();
+  }
+
+  selectChoice(index: number): void {
+    if (this.value.revealAnswer || this.question?.kind !== 'mcq') return;
+    if (index < 0 || index >= (this.question?.choices.length ?? 0)) return;
+    this.value.selectedChoice = index;
+    this.onChange();
   }
 
   reveal(): void {
@@ -73,7 +92,8 @@ export class PresenterState {
   }
 
   setFontSize(size: number): void {
-    this.value.fontSize = Math.max(30, Math.min(44, Math.round(size)));
+    if (!Number.isFinite(size)) return;
+    this.value.fontSize = Math.max(10, Math.min(72, Math.round(size * 2) / 2));
     this.onChange();
   }
 

@@ -11,18 +11,19 @@ This repository is **TypstQuizPresenter**, a runtime/presenter application. It i
 5. **Local Workspace is the production/classroom source mode.** The teacher selects the local root folder `BienSoanTypst`; content stays on the teacher's machine and is read in-browser.
 6. The pinned GitHub provider is dev/demo fallback only. Do not make remote GitHub question loading the default classroom workflow.
 7. Never embed GitHub credentials/tokens in frontend code and never bundle the exercise bank into the hosted app.
-8. Presentation question/choice text must never be reduced below 30pt. If content does not fit, scroll or split rather than shrinking below 30pt.
+8. Presentation font size is teacher-adjustable (10–72pt, 0.5pt steps in the UI). Do not reintroduce a 30pt hard minimum unless the user explicitly asks.
 9. Changes to the parser require fixtures/tests for nested Typst delimiters.
 10. Static hosting (GitHub Pages or equivalent) does **not** require ChatGPT Work. Work is only relevant if the user specifically wants ChatGPT Sites.
 
 ## Current product scope
 
-v0.2 is a teacher-led fullscreen quiz presenter:
+v0.3 is a teacher-led fullscreen quiz presenter:
 - select/reopen a local `BienSoanTypst` workspace;
 - browse/filter local `.typ` sources;
 - parse questions;
 - render with Typst WASM and local libraries/assets;
 - fullscreen presentation;
+- click/select MCQ choices with visual state before reveal;
 - reveal answer and solution;
 - timer and keyboard navigation;
 - remember the directory handle in IndexedDB when the browser permits it.

@@ -49,12 +49,12 @@ The pinned GitHub provider remains a development/demo fallback. It is not the cl
 
 ### 6. Presenter state
 
-Controls current question, answer reveal, solution reveal, timer, font size and fullscreen.
+Controls current question, selected MCQ choice, answer reveal, solution reveal, timer, font size and fullscreen.
 
 ## Why semantic extraction + Typst re-render
 
 Compiling original `#ex` print layout directly would inherit print-oriented badge/source sizes. HTML-only rendering would lose Typst fidelity. The hybrid model extracts semantics while preserving raw Typst fragments and compiles them with the real local libraries into a 16:9 presentation layout.
 
-## Long content policy
+## Projector sizing policy
 
-30pt is a hard lower bound. If content exceeds the projector viewport at 30pt, keep 30pt and scroll/split rather than shrinking further.
+The teacher controls font size directly. The UI accepts 10–72pt in 0.5pt steps. The generated Typst document uses a real 16:9 page (13.333in × 7.5in) with compact margins so vertical space is not wasted. Overflow remains scrollable in the presenter.

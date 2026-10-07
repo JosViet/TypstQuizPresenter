@@ -42,12 +42,14 @@ textarea { min-height:180px; resize:vertical; font-family:ui-monospace,SFMono-Re
 .toolbar .spacer { flex:1; }
 .counter { font-weight:800; color:#334155; }
 .active-source { max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border-radius:999px; background:#ecfdf5; color:#166534; padding:5px 9px; font-size:11px; font-weight:800; }
+.font-size-input { width:74px; min-width:74px; padding:8px 7px; text-align:center; }
 .timer { font-variant-numeric:tabular-nums; font-size:22px; font-weight:900; min-width:64px; text-align:center; }
 .timer.danger { color:#b91c1c; }
 .stage { min-height:0; background:#0f172a; border-radius:14px; padding:16px; display:grid; place-items:center; overflow:hidden; }
 .slide-shell { width:min(100%,calc((100vh - 125px) * 16 / 9)); aspect-ratio:16 / 9; background:#fff; border-radius:8px; overflow:auto; box-shadow:0 20px 60px rgba(15,23,42,.35); }
 .slide-shell .placeholder { min-height:100%; display:grid; place-items:center; padding:36px; text-align:center; color:#64748b; }
-.slide-shell svg { display:block; width:100%; height:auto; min-height:100%; }
+.slide-shell svg { display:block; width:100%; height:auto; min-height:0; }
+.slide-shell a[href*="quiz.local/choice/"] { cursor:pointer; }
 .status { margin-top:10px; padding:8px 10px; border-radius:8px; background:#f8fafc; font-size:12px; color:#475569; }
 .status.error { background:#fef2f2; color:#991b1b; }
 .stage-wrap:fullscreen { background:#020617; padding:10px; grid-template-rows:auto 1fr; }

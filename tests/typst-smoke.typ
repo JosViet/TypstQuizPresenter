@@ -10,6 +10,7 @@
     [$3$],
   ),
   correct: 1,
+  selected: 2,
   reveal: true,
   solution: [$x = 1$.],
   show-solution: true,

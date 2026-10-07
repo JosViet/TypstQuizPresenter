@@ -10,14 +10,17 @@
 - [x] Resolve runtime/dependencies from local workspace
 - [x] Keep GitHub provider only as dev/demo fallback
 - [x] Document privacy boundary
-- [ ] Browser build smoke test with installed dependencies
-- [ ] Real source test: `Toan10/dataTN/0C1-B1.typ`
+- [x] Browser build smoke test with installed dependencies
+- [x] Real source test: `Toan10/dataTN/0CD1-B1.typ`
 - [ ] Image dependency test
 - [ ] CeTZ-heavy source test
 
 ## V0.3 — Classroom polish
 
-- auto-fit 44→40→36→34→32→30, never below 30;
+- [x] clickable MCQ choice selection with reveal colors;
+- [x] teacher-controlled font size (10–72pt, 0.5pt step);
+- [x] compact real 16:9 Typst page/margins;
+- optional auto-fit remains a future enhancement;
 - question selection before presentation;
 - random N questions;
 - tag filtering;

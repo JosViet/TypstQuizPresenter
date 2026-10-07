@@ -2,7 +2,7 @@
 
 A teacher-led classroom quiz presenter for question banks authored in Typst.
 
-## Privacy-first architecture (v0.2)
+## Privacy-first architecture (v0.3)
 
 The production/classroom workflow is **local-first**:
 
@@ -50,9 +50,10 @@ The workspace must contain the real `de-thi.typ` and `vietdoc.typ`. Their depend
 ## Presentation rules
 
 - 16:9 teacher-led fullscreen;
-- 30–44pt controls;
-- **30pt hard minimum**;
-- long content scrolls/splits rather than shrinking below 30pt;
+- free numeric font control from 10–72pt in 0.5pt steps;
+- MCQ choices are directly clickable and visibly selected before reveal;
+- reveal colors the correct answer green and a selected wrong answer red;
+- compact 16:9 page margins maximize projector space;
 - answer and solution reveal are separate states.
 
 ## GitHub mode
@@ -75,7 +76,7 @@ npm run dev
 
 ## Current status
 
-`0.2.0`:
+`0.3.0`:
 
 - local workspace picker;
 - workspace validation;
@@ -84,4 +85,7 @@ npm run dev
 - runtime/dependency loading from local disk;
 - parser and Typst WASM presenter retained;
 - GitHub loader demoted to dev/demo;
-- exercise bank is not part of the hosted app bundle.
+- exercise bank is not part of the hosted app bundle;
+- clickable MCQ selection state;
+- teacher-controlled font size below/above 30pt;
+- compact 16:9 Typst page layout.
