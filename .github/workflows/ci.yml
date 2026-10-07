@@ -27,5 +27,11 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Setup Typst
+        uses: typst-community/setup-typst@v5
+
+      - name: Typst runtime smoke compile
+        run: typst compile --root . tests/typst-smoke.typ /tmp/typst-smoke.pdf
+
       - name: Build
         run: npm run build
