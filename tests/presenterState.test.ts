@@ -67,3 +67,16 @@ test('resetToFirst returns to question one and clears interaction state', () => 
   assert.equal(state.value.showSolution, false);
   assert.equal(state.value.timerRemaining, state.value.timerSeconds);
 });
+
+
+test('pauseTimer preserves remaining time and clears running state', () => {
+  const state = new PresenterState(() => {});
+  state.value.timerRemaining = 17;
+  state.value.timerRunning = true;
+
+  const wasRunning = state.pauseTimer();
+
+  assert.equal(wasRunning, true);
+  assert.equal(state.value.timerRunning, false);
+  assert.equal(state.value.timerRemaining, 17);
+});

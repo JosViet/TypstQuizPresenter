@@ -2,7 +2,7 @@
 
 A teacher-led classroom quiz presenter for question banks authored in Typst.
 
-## Privacy-first architecture (v0.5)
+## Privacy-first architecture (v0.6)
 
 The production/classroom workflow is **local-first**:
 
@@ -76,7 +76,7 @@ npm run dev
 
 ## Current status
 
-`0.5.1`:
+`0.6.0`:
 
 - local workspace picker;
 - workspace validation;
@@ -113,3 +113,14 @@ npm run dev
 - `↺ Câu 1` resets the quiz to the first question and clears current interaction/reveal state.
 - MCQ labels are circular colored badges with white letters and vertical centering for multi-line choices.
 - Correct/wrong reveal colors override the decorative badge palette.
+
+
+## Cross-app teaching workflow
+
+The presenter is designed to survive frequent switching to another teaching app and back:
+
+- installed PWA mode does not depend on the browser Fullscreen API;
+- in a normal Chrome tab, if fullscreen is lost after switching tabs/apps, the current presentation shows a one-tap **Trở lại toàn màn hình** recovery surface;
+- current question, selected answers, reveal state, font size and slide scroll position are kept while the app is backgrounded;
+- a running timer pauses automatically when the app goes to the background and never auto-resumes without the teacher;
+- fullscreen recovery is never shown in standalone/PWA mode.

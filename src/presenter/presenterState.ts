@@ -163,6 +163,13 @@ export class PresenterState {
     this.onChange();
   }
 
+  pauseTimer(): boolean {
+    const wasRunning = this.value.timerRunning;
+    this.stopTimer();
+    if (wasRunning) this.onChange();
+    return wasRunning;
+  }
+
   stopTimer(): void {
     if (this.timer !== undefined) window.clearInterval(this.timer);
     this.timer = undefined;

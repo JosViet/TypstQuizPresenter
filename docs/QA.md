@@ -43,3 +43,14 @@
 - installed PWA opens in landscape standalone mode where supported
 - second launch works with hosted app resources cached offline after one online warm-up
 - service worker never receives local File System Access content
+
+
+## Cross-app resilience
+
+- switch from a fullscreen Chrome presentation to another app, then return: current question/state remains unchanged
+- Chrome-tab fullscreen loss shows a single large tap target to restore fullscreen
+- tapping the recovery surface re-enters fullscreen without resetting the slide
+- installed PWA/standalone mode never shows fullscreen recovery
+- slide scroll position is restored after returning from background
+- running timer pauses on background and keeps its remaining seconds
+- timer stays paused after return until the teacher starts it again

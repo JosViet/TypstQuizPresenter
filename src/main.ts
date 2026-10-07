@@ -9,6 +9,7 @@ import { loadWorkspaceHandle, pickWorkspaceDirectory, saveWorkspaceHandle, suppo
 import { installSwipeNavigation } from './presenter/touchNavigation.ts';
 import { isStandalone, setupPwa } from './pwa.ts';
 import { shortAnswerMatches } from './presenter/answerCompare.ts';
+import { shouldOfferFullscreenRecovery } from './presenter/presentationLifecycle.ts';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const renderer = new TypstQuizRenderer();
@@ -25,6 +26,11 @@ let recentHandle: FileSystemDirectoryHandle | undefined;
 let workspaceFiles: string[] = [];
 let filteredWorkspaceFiles: string[] = [];
 let presentationMode = false;
+let fullscreenWasActive = false;
+let preservedSlideScrollTop = 0;
+let preservedSlideScrollLeft = 0;
+let timerPausedInBackground = false;
+let returnNoticeTimer: number | undefined;
 const LAST_SOURCE_KEY = 'typst-quiz-last-source';
 const state = new PresenterState(() => void renderApp());
 
@@ -61,6 +67,14 @@ app.innerHTML = `
       <label class="muted">Timer</label><select id="timerSeconds" style="width:auto"><option>30</option><option selected>45</option><option>60</option><option>90</option></select>
       <button class="btn" id="timerToggle">Start</button><button class="btn" id="timerReset">Reset timer</button><span class="timer" id="timer">00:45</span><button class="btn preparation-only" id="fullscreen">Fullscreen</button><button class="btn presentation-only danger-soft" id="exitPresentation">Thoát</button>
     </div>
+    <button class="fullscreen-recovery" id="fullscreenRecovery" type="button" hidden>
+      <span class="fullscreen-recovery-card">
+        <span class="fullscreen-recovery-icon">↗</span>
+        <strong>Chạm để trở lại toàn màn hình</strong>
+        <small>Câu hỏi và trạng thái hiện tại vẫn được giữ nguyên.</small>
+      </span>
+    </button>
+    <div class="return-notice" id="returnNotice" hidden></div>
     <section class="stage"><div class="slide-shell" id="slide"><div class="placeholder">Chọn workspace và nạp một file Typst.</div></div></section>
   </main>
 </div>`;
@@ -79,11 +93,48 @@ const stageWrapElement = $('#stageWrap');
 const stageElement = $('.stage');
 const startPresentationButton = $('#startPresentation') as HTMLButtonElement;
 const installAppButton = $('#installApp') as HTMLButtonElement;
+const fullscreenRecoveryButton = $('#fullscreenRecovery') as HTMLButtonElement;
+const returnNotice = $('#returnNotice');
 
 function setStatus(message: string, error = false): void { statusMessage = message; statusError = error; const el = $('#status'); el.textContent = message; el.classList.toggle('error', error); }
 function formatTime(seconds: number): string { return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
 function questionSummary(q: QuizQuestion): string { if (q.kind === 'mcq') return `${q.choices.length} lựa chọn`; if (q.kind === 'true-false') return `${q.choices.length} mệnh đề Đ/S`; if (q.kind === 'short-answer') return 'Trả lời ngắn'; return 'Chưa nhận dạng'; }
 function activeSourceLabel(): string { if (activeMode === 'workspace' && workspace) return `Local · ${workspace.name}`; if (activeMode === 'github') return `GitHub · ${upstream.commit.slice(0, 8)}`; if (activeMode === 'paste') return 'Paste source'; return 'Chưa có nguồn'; }
+
+function updateFullscreenRecovery(): void {
+  fullscreenRecoveryButton.hidden = !shouldOfferFullscreenRecovery({
+    presentationMode,
+    standalone: isStandalone(),
+    fullscreenWasActive,
+    hasFullscreenElement: Boolean(document.fullscreenElement),
+    visible: document.visibilityState === 'visible',
+  });
+}
+
+function showReturnNotice(message: string): void {
+  if (returnNoticeTimer !== undefined) window.clearTimeout(returnNoticeTimer);
+  returnNotice.textContent = message;
+  returnNotice.hidden = false;
+  returnNoticeTimer = window.setTimeout(() => {
+    returnNotice.hidden = true;
+    returnNoticeTimer = undefined;
+  }, 2400);
+}
+
+async function requestPresentationFullscreen(): Promise<void> {
+  if (isStandalone() || document.fullscreenElement || !stageWrapElement.requestFullscreen) {
+    updateFullscreenRecovery();
+    return;
+  }
+
+  try {
+    await stageWrapElement.requestFullscreen();
+    fullscreenWasActive = true;
+  } catch {
+    // Presentation mode remains usable even when the browser declines fullscreen.
+  }
+  updateFullscreenRecovery();
+}
 
 async function enterPresentation(): Promise<void> {
   if (!state.value.questions.length) return;
@@ -91,14 +142,17 @@ async function enterPresentation(): Promise<void> {
   appElement.classList.add('presenting');
   renderApp();
 
-  if (!isStandalone() && !document.fullscreenElement && stageWrapElement.requestFullscreen) {
-    try { await stageWrapElement.requestFullscreen(); } catch { /* Presentation mode still works without fullscreen. */ }
-  }
+  // Installed PWA/standalone mode already owns the app viewport. Fullscreen API is
+  // only a Chrome-tab fallback.
+  if (!isStandalone()) await requestPresentationFullscreen();
+  else updateFullscreenRecovery();
 }
 
 async function exitPresentation(): Promise<void> {
   presentationMode = false;
+  fullscreenWasActive = false;
   appElement.classList.remove('presenting');
+  updateFullscreenRecovery();
   if (document.fullscreenElement) {
     try { await document.exitFullscreen(); } catch { /* Ignore browser-specific fullscreen exit errors. */ }
   }
@@ -280,7 +334,37 @@ $('#parseSource').addEventListener('click', parseCurrentSource); $('#previous').
 startPresentationButton.addEventListener('click', () => void enterPresentation());
 $('#exitPresentation').addEventListener('click', () => void exitPresentation());
 $('#fullscreen').addEventListener('click', async () => { const target = stageWrapElement; if (!document.fullscreenElement) await target.requestFullscreen(); else await document.exitFullscreen(); });
+fullscreenRecoveryButton.addEventListener('click', event => {
+  event.preventDefault();
+  event.stopPropagation();
+  void requestPresentationFullscreen();
+});
 installSwipeNavigation(stageElement, { previous: () => state.previous(), next: () => state.next() });
+
+document.addEventListener('fullscreenchange', () => {
+  if (document.fullscreenElement && presentationMode) fullscreenWasActive = true;
+  updateFullscreenRecovery();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    preservedSlideScrollTop = slideElement.scrollTop;
+    preservedSlideScrollLeft = slideElement.scrollLeft;
+    timerPausedInBackground = state.pauseTimer() || timerPausedInBackground;
+    return;
+  }
+
+  updateFullscreenRecovery();
+  window.requestAnimationFrame(() => {
+    slideElement.scrollTop = preservedSlideScrollTop;
+    slideElement.scrollLeft = preservedSlideScrollLeft;
+  });
+
+  if (timerPausedInBackground) {
+    timerPausedInBackground = false;
+    showReturnNotice('Đã quay lại · timer đang tạm dừng');
+  }
+});
 document.addEventListener('keydown', event => { const active = document.activeElement; if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement) return; if (event.code === 'Space') { event.preventDefault(); state.reveal(); } else if (event.code === 'ArrowRight') state.next(); else if (event.code === 'ArrowLeft') state.previous(); else if (event.key.toLowerCase() === 'f') void $('#stageWrap').requestFullscreen(); else if (event.key.toLowerCase() === 'r') state.toggleTimer(); });
 
 async function initializeRecentWorkspace(): Promise<void> {

@@ -69,3 +69,14 @@ Deferred until presenter is stable: room code, phone responses, response histogr
 - [x] separate timer reset label;
 - [x] vertically centered MCQ labels for multi-line options;
 - [x] circular colored A/B/C/D badges with semantic reveal colors.
+
+
+## V0.6 — Cross-app presentation resilience
+
+- [x] PWA-first presentation without Fullscreen API dependency;
+- [x] one-tap fullscreen recovery after returning to a Chrome tab;
+- [x] preserve slide scroll position across app/tab switching;
+- [x] pause a running timer when the presenter goes to background;
+- [x] never auto-resume timer after returning;
+- [x] keep question/answer/reveal state unchanged on visibility/fullscreen changes;
+- [x] regression coverage for fullscreen recovery decision and timer pause.
