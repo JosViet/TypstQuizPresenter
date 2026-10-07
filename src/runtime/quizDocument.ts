@@ -24,7 +24,7 @@ function fontSizeValue(size: number): number {
 
 export function generatedMainPath(question: QuizQuestion): string {
   if (!question.sourcePath) return '/__quiz__/main.typ';
-  const source = `/${question.sourcePath.replace(/^\\/+/, '')}`;
+  const source = `/${question.sourcePath.replace(/^\/+/, '')}`;
   return `${dirname(source)}/__quiz_presenter_main.typ`;
 }
 
