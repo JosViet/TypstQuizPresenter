@@ -55,3 +55,22 @@ test('dependency scanner resolves absolute and relative paths', () => {
   assert.equal(resolveDependency('/Toan10/data/a.typ', refs[0]!.path), '/de-thi.typ');
   assert.equal(resolveDependency('/Toan10/data/a.typ', refs[1]!.path), '/Toan10/data/fig/a.png');
 });
+
+
+test('dependency scanner ignores examples inside comments and strings', () => {
+  const source = `
+// Cú pháp ví dụ: #immini()[image("hinh.png")]
+/* #include "fake.typ" */
+#let sample = "image(\\\"also-fake.png\\\")"
+#image("real.png")
+#import "real.typ": *
+`;
+  const refs = scanDependencies(source);
+  assert.deepEqual(
+    refs.map(ref => [ref.kind, ref.path]),
+    [
+      ['asset', 'real.png'],
+      ['source', 'real.typ'],
+    ],
+  );
+});
