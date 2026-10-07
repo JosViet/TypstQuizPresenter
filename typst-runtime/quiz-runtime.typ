@@ -88,8 +88,8 @@
 
 #let quiz-mcq(
   number: 1,
-  stem,
-  choices,
+  stem: [],
+  choices: (),
   correct: none,
   reveal: false,
   solution: [],
@@ -110,9 +110,9 @@
 
 #let quiz-tf(
   number: 1,
-  stem,
-  statements,
-  truths,
+  stem: [],
+  statements: (),
+  truths: (),
   reveal: false,
   solution: [],
   show-solution: false,
@@ -151,7 +151,7 @@
 
 #let quiz-short(
   number: 1,
-  stem,
+  stem: [],
   answer: [],
   reveal: false,
   solution: [],
