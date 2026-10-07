@@ -39,3 +39,15 @@
 ## V2 — Student participation
 
 Deferred until presenter is stable: room code, phone responses, response histogram, team mode and session summaries.
+
+
+## V0.4 — Galaxy Tab / PWA
+
+- [x] preparation → presentation mode with hidden sidebar;
+- [x] larger touch targets for coarse-pointer devices;
+- [x] swipe left/right navigation;
+- [x] PWA manifest and standalone landscape mode;
+- [x] service-worker cache for hosted app shell / JS / WASM;
+- [x] automatic recent-workspace reopen when permission remains granted;
+- [x] one-tap permission recovery when Android/Chrome requires it;
+- [x] remember last selected Typst source.

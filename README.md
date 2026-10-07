@@ -2,7 +2,7 @@
 
 A teacher-led classroom quiz presenter for question banks authored in Typst.
 
-## Privacy-first architecture (v0.3)
+## Privacy-first architecture (v0.4)
 
 The production/classroom workflow is **local-first**:
 
@@ -76,7 +76,7 @@ npm run dev
 
 ## Current status
 
-`0.3.0`:
+`0.4.0`:
 
 - local workspace picker;
 - workspace validation;
@@ -89,3 +89,13 @@ npm run dev
 - clickable MCQ selection state;
 - teacher-controlled font size below/above 30pt;
 - compact 16:9 Typst page layout.
+
+
+## Tablet / Galaxy Tab mode
+
+- **Bắt đầu trình chiếu** hides the preparation sidebar and expands the stage.
+- Touch targets are enlarged on coarse-pointer devices.
+- Swipe left/right moves between questions.
+- The app is installable as a PWA and requests landscape standalone display.
+- A service worker caches the app shell and same-origin JS/WASM resources after the first online session. Local `.typ` workspace content is never cached by the service worker.
+- A remembered workspace handle is reopened automatically when permission is still granted; otherwise the UI asks for one tap to grant read permission again.

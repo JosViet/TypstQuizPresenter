@@ -6,6 +6,8 @@ import { LocalWorkspace } from './runtime/localWorkspace.ts';
 import { TypstQuizRenderer } from './runtime/typstRenderer.ts';
 import { UpstreamClient } from './runtime/upstreamClient.ts';
 import { loadWorkspaceHandle, pickWorkspaceDirectory, saveWorkspaceHandle, supportsDirectoryPicker } from './runtime/workspaceStore.ts';
+import { installSwipeNavigation } from './presenter/touchNavigation.ts';
+import { isStandalone, setupPwa } from './pwa.ts';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const renderer = new TypstQuizRenderer();
@@ -21,6 +23,8 @@ let workspace: LocalWorkspace | undefined;
 let recentHandle: FileSystemDirectoryHandle | undefined;
 let workspaceFiles: string[] = [];
 let filteredWorkspaceFiles: string[] = [];
+let presentationMode = false;
+const LAST_SOURCE_KEY = 'typst-quiz-last-source';
 const state = new PresenterState(() => void renderApp());
 
 app.innerHTML = `
@@ -36,6 +40,8 @@ app.innerHTML = `
       <div class="field"><label>Lọc file Typst</label><input id="workspaceFilter" placeholder="Ví dụ: 0C1-B1, dataTN, Toan10..." disabled /></div>
       <div class="field"><label>File trong workspace</label><select id="workspaceFiles" size="9" disabled><option>Chưa có workspace</option></select></div>
       <button class="btn primary full" id="loadWorkspaceFile" disabled>Nạp file đã chọn</button>
+      <button class="btn present full" id="startPresentation" disabled>Bắt đầu trình chiếu</button>
+      <button class="btn full" id="installApp" hidden>Cài app trên thiết bị</button>
     </section>
     <details class="source-card dev-source">
       <summary>Dev / demo: GitHub hoặc paste source</summary>
@@ -52,7 +58,7 @@ app.innerHTML = `
       <span class="spacer"></span><span class="active-source" id="activeSource">Chưa có nguồn</span>
       <label class="muted">Cỡ chữ</label><input id="fontSize" class="font-size-input" type="number" min="10" max="72" step="0.5" value="30" inputmode="decimal" />
       <label class="muted">Timer</label><select id="timerSeconds" style="width:auto"><option>30</option><option selected>45</option><option>60</option><option>90</option></select>
-      <button class="btn" id="timerToggle">Start</button><button class="btn" id="timerReset">Reset</button><span class="timer" id="timer">00:45</span><button class="btn" id="fullscreen">Fullscreen</button>
+      <button class="btn" id="timerToggle">Start</button><button class="btn" id="timerReset">Reset</button><span class="timer" id="timer">00:45</span><button class="btn preparation-only" id="fullscreen">Fullscreen</button><button class="btn presentation-only danger-soft" id="exitPresentation">Thoát</button>
     </div>
     <section class="stage"><div class="slide-shell" id="slide"><div class="placeholder">Chọn workspace và nạp một file Typst.</div></div></section>
   </main>
@@ -67,11 +73,36 @@ const workspaceLoadButton = $('#loadWorkspaceFile') as HTMLButtonElement;
 const recentWorkspaceButton = $('#openRecentWorkspace') as HTMLButtonElement;
 const fontSizeInput = $('#fontSize') as HTMLInputElement;
 const slideElement = $('#slide');
+const appElement = $('.app');
+const stageWrapElement = $('#stageWrap');
+const stageElement = $('.stage');
+const startPresentationButton = $('#startPresentation') as HTMLButtonElement;
+const installAppButton = $('#installApp') as HTMLButtonElement;
 
 function setStatus(message: string, error = false): void { statusMessage = message; statusError = error; const el = $('#status'); el.textContent = message; el.classList.toggle('error', error); }
 function formatTime(seconds: number): string { return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
 function questionSummary(q: QuizQuestion): string { if (q.kind === 'mcq') return `${q.choices.length} lựa chọn`; if (q.kind === 'true-false') return `${q.choices.length} mệnh đề Đ/S`; if (q.kind === 'short-answer') return 'Trả lời ngắn'; return 'Chưa nhận dạng'; }
 function activeSourceLabel(): string { if (activeMode === 'workspace' && workspace) return `Local · ${workspace.name}`; if (activeMode === 'github') return `GitHub · ${upstream.commit.slice(0, 8)}`; if (activeMode === 'paste') return 'Paste source'; return 'Chưa có nguồn'; }
+
+async function enterPresentation(): Promise<void> {
+  if (!state.value.questions.length) return;
+  presentationMode = true;
+  appElement.classList.add('presenting');
+  renderApp();
+
+  if (!isStandalone() && !document.fullscreenElement && stageWrapElement.requestFullscreen) {
+    try { await stageWrapElement.requestFullscreen(); } catch { /* Presentation mode still works without fullscreen. */ }
+  }
+}
+
+async function exitPresentation(): Promise<void> {
+  presentationMode = false;
+  appElement.classList.remove('presenting');
+  if (document.fullscreenElement) {
+    try { await document.exitFullscreen(); } catch { /* Ignore browser-specific fullscreen exit errors. */ }
+  }
+  renderApp();
+}
 function escapeHtml(value: string): string { return value.replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch] ?? ch)); }
 
 function choiceIndexFromTarget(target: EventTarget | null): number | undefined {
@@ -116,13 +147,21 @@ function renderApp(): void {
   ($('#previous') as HTMLButtonElement).disabled = state.value.current <= 0; ($('#next') as HTMLButtonElement).disabled = state.value.current >= state.value.questions.length - 1;
   ($('#reveal') as HTMLButtonElement).textContent = !state.value.revealAnswer ? 'Hiện đáp án' : !state.value.showSolution ? 'Hiện lời giải' : 'Đã hiện lời giải';
   fontSizeInput.value = String(state.value.fontSize); ($('#timerSeconds') as HTMLSelectElement).value = String(state.value.timerSeconds); $('#timer').textContent = formatTime(state.value.timerRemaining); $('#timer').classList.toggle('danger', state.value.timerRemaining <= 10); ($('#timerToggle') as HTMLButtonElement).textContent = state.value.timerRunning ? 'Pause' : 'Start'; $('#activeSource').textContent = activeSourceLabel();
+  startPresentationButton.disabled = state.value.questions.length === 0;
+  appElement.classList.toggle('presenting', presentationMode);
   renderQuestionList(); $('#status').textContent = statusMessage; $('#status').classList.toggle('error', statusError); void renderSlide();
 }
 
 function refreshWorkspaceFileList(filter = ''): void {
   const needle = filter.trim().toLocaleLowerCase('vi'); filteredWorkspaceFiles = workspaceFiles.filter(path => !needle || path.toLocaleLowerCase('vi').includes(needle));
   workspaceSelect.innerHTML = filteredWorkspaceFiles.length ? filteredWorkspaceFiles.map(path => `<option value="${escapeHtml(path)}">${escapeHtml(path)}</option>`).join('') : '<option value="">Không tìm thấy file phù hợp</option>';
-  workspaceSelect.disabled = !workspace || filteredWorkspaceFiles.length === 0; workspaceLoadButton.disabled = workspaceSelect.disabled; if (!workspaceSelect.disabled) workspaceSelect.selectedIndex = 0;
+  workspaceSelect.disabled = !workspace || filteredWorkspaceFiles.length === 0;
+  workspaceLoadButton.disabled = workspaceSelect.disabled;
+  if (!workspaceSelect.disabled) {
+    const remembered = localStorage.getItem(LAST_SOURCE_KEY);
+    const rememberedIndex = remembered ? filteredWorkspaceFiles.indexOf(remembered) : -1;
+    workspaceSelect.selectedIndex = rememberedIndex >= 0 ? rememberedIndex : 0;
+  }
 }
 function updateWorkspaceInfo(message: string, connected: boolean): void { const info = $('#workspaceInfo'); info.textContent = message; info.classList.toggle('empty', !connected); info.classList.toggle('connected', connected); }
 
@@ -136,7 +175,7 @@ async function connectWorkspace(handle: FileSystemDirectoryHandle, requestPermis
 
 async function loadSelectedWorkspaceFile(): Promise<void> {
   if (!workspace) return setStatus('Chưa có workspace local.', true); const path = workspaceSelect.value; if (!path) return setStatus('Chưa chọn file Typst.', true); setStatus(`Đang đọc local: ${path}`);
-  try { sourcePath = path; sourceText = await workspace.readTextSource(path); sourceArea.value = sourceText; pathInput.value = path; activeMode = 'workspace'; renderer.setWorkspace(workspace); const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; setStatus(`Local · ${path} · tìm thấy ${doc.questions.length} câu hỏi.`); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
+  try { sourcePath = path; sourceText = await workspace.readTextSource(path); sourceArea.value = sourceText; pathInput.value = path; activeMode = 'workspace'; renderer.setWorkspace(workspace); const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; localStorage.setItem(LAST_SOURCE_KEY, path); setStatus(`Local · ${path} · tìm thấy ${doc.questions.length} câu hỏi.`); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
 }
 
 function parseCurrentSource(): void {
@@ -154,11 +193,35 @@ $('#loadGithub').addEventListener('click', async () => {
 });
 
 $('#parseSource').addEventListener('click', parseCurrentSource); $('#previous').addEventListener('click', () => state.previous()); $('#next').addEventListener('click', () => state.next()); $('#reveal').addEventListener('click', () => state.reveal()); fontSizeInput.addEventListener('change', () => state.setFontSize(Number(fontSizeInput.value))); $('#timerSeconds').addEventListener('change', event => state.setTimer(Number((event.target as HTMLSelectElement).value))); $('#timerToggle').addEventListener('click', () => state.toggleTimer()); $('#timerReset').addEventListener('click', () => state.resetTimer());
-$('#fullscreen').addEventListener('click', async () => { const target = $('#stageWrap'); if (!document.fullscreenElement) await target.requestFullscreen(); else await document.exitFullscreen(); });
+startPresentationButton.addEventListener('click', () => void enterPresentation());
+$('#exitPresentation').addEventListener('click', () => void exitPresentation());
+$('#fullscreen').addEventListener('click', async () => { const target = stageWrapElement; if (!document.fullscreenElement) await target.requestFullscreen(); else await document.exitFullscreen(); });
+installSwipeNavigation(stageElement, { previous: () => state.previous(), next: () => state.next() });
 document.addEventListener('keydown', event => { const active = document.activeElement; if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement) return; if (event.code === 'Space') { event.preventDefault(); state.reveal(); } else if (event.code === 'ArrowRight') state.next(); else if (event.code === 'ArrowLeft') state.previous(); else if (event.key.toLowerCase() === 'f') void $('#stageWrap').requestFullscreen(); else if (event.key.toLowerCase() === 'r') state.toggleTimer(); });
 
 async function initializeRecentWorkspace(): Promise<void> {
   if (!supportsDirectoryPicker()) { recentWorkspaceButton.disabled = true; ($('#chooseWorkspace') as HTMLButtonElement).disabled = true; updateWorkspaceInfo('Trình duyệt chưa hỗ trợ Local Workspace. Dùng Chrome/Edge mới qua HTTPS hoặc localhost.', false); return; }
-  try { recentHandle = await loadWorkspaceHandle(); if (recentHandle) { recentWorkspaceButton.disabled = false; recentWorkspaceButton.textContent = `Mở lại: ${recentHandle.name}`; updateWorkspaceInfo(`Workspace gần đây: ${recentHandle.name}. Bấm "Mở lại" để cấp quyền nếu cần.`, false); } } catch { /* IndexedDB policy can block persistence; picker still works. */ }
+  try {
+    recentHandle = await loadWorkspaceHandle();
+    if (recentHandle) {
+      recentWorkspaceButton.disabled = false;
+      const probe = new LocalWorkspace(recentHandle);
+      const permission = await probe.permission(false);
+
+      if (permission === 'granted') {
+        recentWorkspaceButton.textContent = `Đang mở: ${recentHandle.name}`;
+        await connectWorkspace(recentHandle, false);
+        const remembered = localStorage.getItem(LAST_SOURCE_KEY);
+        if (remembered && workspaceFiles.includes(remembered)) {
+          workspaceSelect.value = remembered;
+          await loadSelectedWorkspaceFile();
+        }
+      } else {
+        recentWorkspaceButton.textContent = `Mở lại: ${recentHandle.name}`;
+        updateWorkspaceInfo(`Workspace gần đây: ${recentHandle.name}. Android/Chrome cần cấp lại quyền đọc bằng một lần chạm.`, false);
+      }
+    }
+  } catch { /* IndexedDB policy can block persistence; picker still works. */ }
 }
+setupPwa(installAppButton, setStatus);
 renderApp(); void initializeRecentWorkspace();

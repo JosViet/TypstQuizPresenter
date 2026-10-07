@@ -31,3 +31,15 @@
 - Space reveals answer then solution
 - Left/Right arrows navigate
 - timer does not trigger unnecessary recompilation
+
+
+## Galaxy Tab / PWA
+
+- Chrome/Chromium HTTPS: workspace picker opens and validates root folder
+- recent workspace automatically reconnects when permission is granted
+- permission prompt path remains one-tap when permission is prompt/denied
+- presentation mode hides sidebar and keeps touch controls >= 44px
+- swipe left/right changes question; vertical/short gestures are ignored
+- installed PWA opens in landscape standalone mode where supported
+- second launch works with hosted app resources cached offline after one online warm-up
+- service worker never receives local File System Access content

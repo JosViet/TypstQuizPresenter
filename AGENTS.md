@@ -17,7 +17,7 @@ This repository is **TypstQuizPresenter**, a runtime/presenter application. It i
 
 ## Current product scope
 
-v0.3 is a teacher-led fullscreen quiz presenter:
+v0.4 is a teacher-led tablet-first fullscreen quiz presenter:
 - select/reopen a local `BienSoanTypst` workspace;
 - browse/filter local `.typ` sources;
 - parse questions;
@@ -25,7 +25,8 @@ v0.3 is a teacher-led fullscreen quiz presenter:
 - fullscreen presentation;
 - click/select MCQ choices with visual state before reveal;
 - reveal answer and solution;
-- timer and keyboard navigation;
+- timer, keyboard navigation, and touch swipe navigation;
+- PWA install/offline app-shell support for Galaxy Tab / Chromium tablets;
 - remember the directory handle in IndexedDB when the browser permits it.
 
 Live multiplayer/student phones are intentionally deferred until the presenter is stable.
@@ -33,3 +34,5 @@ Live multiplayer/student phones are intentionally deferred until the presenter i
 ## Hosting
 
 The app shell may be hosted publicly because the exercise bank is not part of the bundle. GitHub Pages deployment is configured in `.github/workflows/pages.yml`; the repository must first have Pages enabled with **Settings → Pages → Source: GitHub Actions**.
+
+11. Service-worker caching must remain limited to hosted app resources. Never cache or upload local workspace question files through network APIs.

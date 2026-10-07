@@ -55,3 +55,99 @@ textarea { min-height:180px; resize:vertical; font-family:ui-monospace,SFMono-Re
 .stage-wrap:fullscreen { background:#020617; padding:10px; grid-template-rows:auto 1fr; }
 .stage-wrap:fullscreen .slide-shell { width:min(100%,calc((100vh - 84px) * 16 / 9)); }
 @media (max-width:980px) { .app{grid-template-columns:1fr;} .sidebar{max-height:none;border-right:0;border-bottom:1px solid #cbd5e1;} .stage-wrap{min-height:70vh;} }
+
+.presentation-only { display:none; }
+.btn.present { background:#0f766e; border-color:#0f766e; color:#fff; }
+.btn.present:hover { background:#115e59; }
+.btn.danger-soft { background:#fff1f2; border-color:#fecdd3; color:#be123c; }
+.stage { touch-action:pan-y; }
+
+.app.presenting {
+  grid-template-columns:1fr;
+  height:100svh;
+  min-height:100svh;
+  overflow:hidden;
+}
+.app.presenting .sidebar { display:none; }
+.app.presenting .presentation-only { display:inline-flex; align-items:center; justify-content:center; }
+.app.presenting .preparation-only { display:none; }
+.app.presenting .stage-wrap {
+  height:100svh;
+  min-height:100svh;
+  padding:6px;
+  gap:6px;
+  grid-template-rows:auto 1fr;
+  background:#020617;
+}
+.app.presenting .toolbar {
+  min-height:58px;
+  padding:5px 7px;
+  gap:7px;
+  border-radius:10px;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+}
+.app.presenting .toolbar .active-source,
+.app.presenting .toolbar > label {
+  display:none;
+}
+.app.presenting .toolbar .btn {
+  min-height:46px;
+  padding:8px 14px;
+  font-size:16px;
+  white-space:nowrap;
+}
+.app.presenting .toolbar #previous,
+.app.presenting .toolbar #next {
+  min-width:52px;
+  font-size:24px;
+  padding-inline:10px;
+}
+.app.presenting .toolbar #reveal { min-width:132px; }
+.app.presenting .font-size-input {
+  width:70px;
+  min-width:70px;
+  min-height:46px;
+  font-size:16px;
+}
+.app.presenting .toolbar select {
+  width:auto;
+  min-height:46px;
+  font-size:16px;
+}
+.app.presenting .timer {
+  font-size:24px;
+  min-width:72px;
+}
+.app.presenting .stage {
+  min-height:0;
+  padding:4px;
+  border-radius:10px;
+}
+.app.presenting .slide-shell {
+  width:min(100%, calc((100svh - 74px) * 16 / 9));
+  max-height:calc(100svh - 74px);
+  border-radius:6px;
+  box-shadow:none;
+}
+.app.presenting .counter {
+  min-width:58px;
+  text-align:center;
+  font-size:16px;
+}
+
+@media (pointer:coarse) {
+  .btn { min-height:44px; }
+  input,select { min-height:44px; }
+  .question-item { min-height:50px; }
+  .source-card { padding:14px; }
+}
+
+@media (max-width:1180px) and (orientation:landscape) {
+  .app:not(.presenting) { grid-template-columns:340px 1fr; }
+  .sidebar { padding:12px; }
+  .stage-wrap { padding:10px; }
+  .toolbar { gap:6px; padding:7px; }
+  .active-source { display:none; }
+}
