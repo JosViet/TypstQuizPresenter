@@ -46,7 +46,7 @@ export function buildQuizDocument(question: QuizQuestion, options: QuizRenderOpt
 `;
 
   if (question.kind === 'mcq') {
-    const choices = question.choices.map(choice => content(choice.raw)).join(',\\n    ');
+    const choices = question.choices.map(choice => content(choice.raw)).join(',\n    ');
     const correct = question.choices.findIndex(choice => choice.correct);
     const selected = options.selectedChoice ?? null;
     return `${common}
@@ -67,7 +67,7 @@ export function buildQuizDocument(question: QuizQuestion, options: QuizRenderOpt
   }
 
   if (question.kind === 'true-false') {
-    const statements = question.choices.map(choice => content(choice.raw)).join(',\\n    ');
+    const statements = question.choices.map(choice => content(choice.raw)).join(',\n    ');
     const truths = question.choices.map(choice => typstBool(choice.correct)).join(', ');
     return `${common}
 #quiz-tf(
