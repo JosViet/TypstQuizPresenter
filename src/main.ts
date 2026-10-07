@@ -55,11 +55,11 @@ app.innerHTML = `
   </aside>
   <main class="stage-wrap" id="stageWrap">
     <div class="toolbar">
-      <button class="btn" id="previous">←</button><span class="counter" id="counter">0 / 0</span><button class="btn" id="next">→</button><button class="btn primary" id="reveal">Hiện đáp án</button>
+      <button class="btn" id="previous">←</button><span class="counter" id="counter">0 / 0</span><button class="btn" id="next">→</button><button class="btn reset-first" id="resetQuiz">↺ Câu 1</button><button class="btn primary" id="reveal">Hiện đáp án</button>
       <span class="spacer"></span><span class="active-source" id="activeSource">Chưa có nguồn</span>
       <label class="muted">Cỡ chữ</label><input id="fontSize" class="font-size-input" type="number" min="10" max="72" step="0.5" value="30" inputmode="decimal" />
       <label class="muted">Timer</label><select id="timerSeconds" style="width:auto"><option>30</option><option selected>45</option><option>60</option><option>90</option></select>
-      <button class="btn" id="timerToggle">Start</button><button class="btn" id="timerReset">Reset</button><span class="timer" id="timer">00:45</span><button class="btn preparation-only" id="fullscreen">Fullscreen</button><button class="btn presentation-only danger-soft" id="exitPresentation">Thoát</button>
+      <button class="btn" id="timerToggle">Start</button><button class="btn" id="timerReset">Reset timer</button><span class="timer" id="timer">00:45</span><button class="btn preparation-only" id="fullscreen">Fullscreen</button><button class="btn presentation-only danger-soft" id="exitPresentation">Thoát</button>
     </div>
     <section class="stage"><div class="slide-shell" id="slide"><div class="placeholder">Chọn workspace và nạp một file Typst.</div></div></section>
   </main>
@@ -276,7 +276,7 @@ $('#loadGithub').addEventListener('click', async () => {
   try { renderer.setWorkspace(undefined); activeMode = 'github'; workspace = undefined; sourceText = await upstream.loadTextSource(path); sourcePath = path; sourceArea.value = sourceText; const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; setStatus(`GitHub dev/demo · ${path} · ${doc.questions.length} câu.`); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
 });
 
-$('#parseSource').addEventListener('click', parseCurrentSource); $('#previous').addEventListener('click', () => state.previous()); $('#next').addEventListener('click', () => state.next()); $('#reveal').addEventListener('click', () => state.reveal()); fontSizeInput.addEventListener('change', () => state.setFontSize(Number(fontSizeInput.value))); $('#timerSeconds').addEventListener('change', event => state.setTimer(Number((event.target as HTMLSelectElement).value))); $('#timerToggle').addEventListener('click', () => state.toggleTimer()); $('#timerReset').addEventListener('click', () => state.resetTimer());
+$('#parseSource').addEventListener('click', parseCurrentSource); $('#previous').addEventListener('click', () => state.previous()); $('#next').addEventListener('click', () => state.next()); $('#resetQuiz').addEventListener('click', () => state.resetToFirst()); $('#reveal').addEventListener('click', () => state.reveal()); fontSizeInput.addEventListener('change', () => state.setFontSize(Number(fontSizeInput.value))); $('#timerSeconds').addEventListener('change', event => state.setTimer(Number((event.target as HTMLSelectElement).value))); $('#timerToggle').addEventListener('click', () => state.toggleTimer()); $('#timerReset').addEventListener('click', () => state.resetTimer());
 startPresentationButton.addEventListener('click', () => void enterPresentation());
 $('#exitPresentation').addEventListener('click', () => void exitPresentation());
 $('#fullscreen').addEventListener('click', async () => { const target = stageWrapElement; if (!document.fullscreenElement) await target.requestFullscreen(); else await document.exitFullscreen(); });

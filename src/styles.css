@@ -231,3 +231,15 @@ textarea { min-height:180px; resize:vertical; font-family:ui-monospace,SFMono-Re
     width:auto;
   }
 }
+
+.btn.reset-first {
+  border-color:#bfdbfe;
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+.btn.reset-first:hover {
+  background:#dbeafe;
+}
+.app.presenting .toolbar #resetQuiz {
+  min-width:88px;
+}

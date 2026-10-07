@@ -21,6 +21,7 @@
 #let _quiz-option(
   label,
   body,
+  base-accent: quiz-primary,
   correct: false,
   selected: false,
   reveal: false,
@@ -30,12 +31,20 @@
   let is-wrong = reveal and selected and not correct
   let is-selected = selected and not reveal
 
+  let accent = if is-correct {
+    quiz-correct
+  } else if is-wrong {
+    quiz-wrong
+  } else {
+    base-accent
+  }
+
   let option-fill = if is-correct {
     quiz-correct.lighten(89%)
   } else if is-wrong {
     quiz-wrong.lighten(91%)
   } else if is-selected {
-    quiz-primary.lighten(92%)
+    base-accent.lighten(91%)
   } else {
     white
   }
@@ -45,31 +54,39 @@
   } else if is-wrong {
     quiz-wrong
   } else if is-selected {
-    quiz-primary
+    base-accent
   } else {
     quiz-border
   }
 
-  let accent = if is-correct {
-    quiz-correct
-  } else if is-wrong {
-    quiz-wrong
-  } else {
-    quiz-primary
-  }
+  let badge-size = calc.max(28pt, calc.min(42pt, font-size * 1.15))
 
   block(
     width: 100%,
-    inset: (x: 11pt, y: 6.5pt),
+    inset: (x: 11pt, y: 7pt),
     fill: option-fill,
     stroke: 1.2pt + option-stroke,
-    radius: 8pt,
+    radius: 9pt,
   )[
     #grid(
-      columns: (32pt, 1fr),
-      column-gutter: 7pt,
-      align: (center + top, left + top),
-      [#text(size: font-size, weight: "bold", fill: accent)[#label]],
+      columns: (badge-size + 8pt, 1fr),
+      column-gutter: 8pt,
+      align: (center + horizon, left + top),
+      [
+        #box(
+          width: badge-size,
+          height: badge-size,
+          fill: accent,
+          radius: badge-size / 2,
+          align(center + horizon)[
+            #text(
+              size: calc.max(14pt, font-size * 0.62),
+              weight: "bold",
+              fill: white,
+            )[#label]
+          ],
+        )
+      ],
       [#text(
         size: font-size,
         weight: if is-correct or is-wrong or is-selected { "bold" } else { "regular" },
@@ -90,7 +107,7 @@
   let natural-fit(n) = {
     let cell = (avail - gap * (n - 1)) / n
     choices.all(c => {
-      let measured = measure(text(size: font-size)[#c], width: calc.max(cell - 58pt, 40pt))
+      let measured = measure(text(size: font-size)[#c], width: calc.max(cell - 70pt, 40pt))
       measured.height <= font-size * 2.2
     })
   }
@@ -104,6 +121,16 @@
   }
 
   let letters = ("A", "B", "C", "D", "E", "F", "G", "H")
+  let palette = (
+    rgb("#2563eb"),
+    rgb("#7c3aed"),
+    rgb("#ea580c"),
+    rgb("#0891b2"),
+    rgb("#db2777"),
+    rgb("#16a34a"),
+    rgb("#ca8a04"),
+    rgb("#4f46e5"),
+  )
 
   grid(
     columns: range(cols).map(_ => 1fr),
@@ -115,6 +142,7 @@
         _quiz-option(
           letters.at(i, default: str(i + 1)),
           c,
+          base-accent: palette.at(i, default: quiz-primary),
           correct: correct != none and i == correct,
           selected: selected != none and i == selected,
           reveal: reveal,

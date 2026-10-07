@@ -84,6 +84,14 @@ export class PresenterState {
     this.onChange();
   }
 
+  resetToFirst(): void {
+    if (!this.value.questions.length) return;
+    this.stopTimer();
+    this.value.current = 0;
+    this.resetQuestionView();
+    this.onChange();
+  }
+
   selectChoice(index: number): void {
     if (this.value.revealAnswer || this.question?.kind !== 'mcq') return;
     if (index < 0 || index >= (this.question?.choices.length ?? 0)) return;

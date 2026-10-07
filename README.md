@@ -76,7 +76,7 @@ npm run dev
 
 ## Current status
 
-`0.5.0`:
+`0.5.1`:
 
 - local workspace picker;
 - workspace validation;
@@ -106,3 +106,10 @@ npm run dev
 - MCQ: tap one choice, then reveal correct/wrong colors.
 - True/False: each statement has Đ/S chips; selections lock after reveal and are compared visually to the canonical truth values.
 - Short answer: type into the on-slide input. After reveal, the app performs only basic normalized-string comparison; it is intentionally not a CAS and the canonical Typst answer remains authoritative.
+
+
+### v0.5.1 classroom polish
+
+- `↺ Câu 1` resets the quiz to the first question and clears current interaction/reveal state.
+- MCQ labels are circular colored badges with white letters and vertical centering for multi-line choices.
+- Correct/wrong reveal colors override the decorative badge palette.

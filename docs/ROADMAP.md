@@ -61,3 +61,11 @@ Deferred until presenter is stable: room code, phone responses, response histogr
 - [x] normalized textual comparison after reveal (not CAS);
 - [x] reset interaction state when changing question;
 - [x] regression tests + Typst smoke coverage.
+
+
+## V0.5.1 — MCQ visual polish
+
+- [x] reset-to-first control;
+- [x] separate timer reset label;
+- [x] vertically centered MCQ labels for multi-line options;
+- [x] circular colored A/B/C/D badges with semantic reveal colors.

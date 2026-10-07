@@ -42,3 +42,28 @@ test('short-answer input is reset when changing question', () => {
   state.next();
   assert.equal(state.value.shortAnswerInput, '');
 });
+
+
+test('resetToFirst returns to question one and clears interaction state', () => {
+  const first = makeQuestion('mcq');
+  const second = { ...makeQuestion('true-false'), index: 1, id: 'tf-2' };
+  const state = new PresenterState(() => {});
+
+  state.setQuestions([first, second]);
+  state.next();
+  state.selectTrueFalse(0, false);
+  state.reveal();
+
+  assert.equal(state.value.current, 1);
+  assert.equal(state.value.revealAnswer, true);
+
+  state.resetToFirst();
+
+  assert.equal(state.value.current, 0);
+  assert.equal(state.value.selectedChoice, null);
+  assert.deepEqual(state.value.trueFalseSelections, []);
+  assert.equal(state.value.shortAnswerInput, '');
+  assert.equal(state.value.revealAnswer, false);
+  assert.equal(state.value.showSolution, false);
+  assert.equal(state.value.timerRemaining, state.value.timerSeconds);
+});
