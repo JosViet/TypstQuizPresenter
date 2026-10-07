@@ -8,6 +8,7 @@ import { UpstreamClient } from './runtime/upstreamClient.ts';
 import { loadWorkspaceHandle, pickWorkspaceDirectory, saveWorkspaceHandle, supportsDirectoryPicker } from './runtime/workspaceStore.ts';
 import { installSwipeNavigation } from './presenter/touchNavigation.ts';
 import { isStandalone, setupPwa } from './pwa.ts';
+import { shortAnswerMatches } from './presenter/answerCompare.ts';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const renderer = new TypstQuizRenderer();
@@ -105,32 +106,115 @@ async function exitPresentation(): Promise<void> {
 }
 function escapeHtml(value: string): string { return value.replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch] ?? ch)); }
 
-function choiceIndexFromTarget(target: EventTarget | null): number | undefined {
+type SlideInteraction =
+  | { kind: 'mcq'; index: number }
+  | { kind: 'tf'; index: number; value: boolean };
+
+function interactionFromTarget(target: EventTarget | null): SlideInteraction | undefined {
   if (!(target instanceof Element)) return undefined;
   const anchor = target.closest('a');
   if (!anchor) return undefined;
-  const href = anchor.getAttribute('href') ?? anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href') ?? '';
-  const match = href.match(/quiz\.local\/choice\/(\d+)/);
-  if (!match) return undefined;
-  const index = Number(match[1]);
-  return Number.isInteger(index) ? index : undefined;
+
+  const href = anchor.getAttribute('href')
+    ?? anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href')
+    ?? '';
+
+  const choice = href.match(/quiz\.local\/choice\/(\d+)/);
+  if (choice) {
+    const index = Number(choice[1]);
+    return Number.isInteger(index) ? { kind: 'mcq', index } : undefined;
+  }
+
+  const tf = href.match(/quiz\.local\/tf\/(\d+)\/(true|false)/);
+  if (tf) {
+    const index = Number(tf[1]);
+    if (!Number.isInteger(index)) return undefined;
+    return { kind: 'tf', index, value: tf[2] === 'true' };
+  }
+
+  return undefined;
 }
 
 slideElement.addEventListener('click', event => {
-  const index = choiceIndexFromTarget(event.target);
-  if (index === undefined) return;
+  const interaction = interactionFromTarget(event.target);
+  if (!interaction) return;
+
   event.preventDefault();
-  state.selectChoice(index);
+  if (interaction.kind === 'mcq') state.selectChoice(interaction.index);
+  else state.selectTrueFalse(interaction.index, interaction.value);
 });
+
+function renderShortAnswerOverlay(question: QuizQuestion): void {
+  if (question.kind !== 'short-answer') return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'short-answer-overlay';
+
+  const label = document.createElement('div');
+  label.className = 'short-answer-label';
+  label.textContent = 'Câu trả lời của học sinh';
+
+  const input = document.createElement('input');
+  input.className = 'short-answer-input';
+  input.type = 'text';
+  input.inputMode = 'text';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.placeholder = 'Nhập đáp án…';
+  input.value = state.value.shortAnswerInput;
+  input.disabled = state.value.revealAnswer;
+
+  input.addEventListener('input', () => state.setShortAnswerInput(input.value));
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !state.value.revealAnswer) {
+      state.setShortAnswerInput(input.value);
+      state.reveal();
+    }
+  });
+
+  overlay.append(label, input);
+
+  if (state.value.revealAnswer) {
+    const feedback = document.createElement('div');
+    feedback.className = 'short-answer-feedback';
+
+    const matches = shortAnswerMatches(state.value.shortAnswerInput, question.shortAnswer);
+    if (matches === true) {
+      feedback.classList.add('correct');
+      feedback.textContent = 'Khớp đáp án';
+    } else if (matches === false) {
+      feedback.classList.add('mismatch');
+      feedback.textContent = 'Chưa khớp · đối chiếu theo chuỗi';
+    } else {
+      feedback.classList.add('neutral');
+      feedback.textContent = 'Chưa nhập đáp án';
+    }
+
+    overlay.append(feedback);
+  }
+
+  slideElement.append(overlay);
+}
 
 async function renderSlide(): Promise<void> {
   const q = state.question; const slide = $('#slide');
   if (!q) { lastSlideSignature = ''; slide.innerHTML = '<div class="placeholder">Chọn workspace và nạp một file Typst.</div>'; return; }
-  const signature = [activeMode, workspace?.cacheKey ?? '', q.id, state.value.selectedChoice ?? 'none', state.value.revealAnswer, state.value.showSolution, state.value.fontSize].join('|');
+  const tfSignature = state.value.trueFalseSelections.map(value => value === null ? 'n' : value ? 't' : 'f').join('');
+  const signature = [activeMode, workspace?.cacheKey ?? '', q.id, state.value.selectedChoice ?? 'none', tfSignature, state.value.revealAnswer, state.value.showSolution, state.value.fontSize].join('|');
   if (signature === lastSlideSignature) return; lastSlideSignature = signature; const revision = ++renderRevision; slide.innerHTML = '<div class="placeholder">Đang compile Typst…</div>';
   try {
-    const svg = await renderer.render(q, { selectedChoice: state.value.selectedChoice, revealAnswer: state.value.revealAnswer, showSolution: state.value.showSolution, fontSize: state.value.fontSize, theme: 'light' });
-    if (revision !== renderRevision) return; slide.innerHTML = svg; setStatus(`${activeSourceLabel()} · ${q.kind} · ${state.value.fontSize}pt`);
+    const svg = await renderer.render(q, {
+      selectedChoice: state.value.selectedChoice,
+      trueFalseSelections: state.value.trueFalseSelections,
+      revealAnswer: state.value.revealAnswer,
+      showSolution: state.value.showSolution,
+      fontSize: state.value.fontSize,
+      theme: 'light',
+    });
+    if (revision !== renderRevision) return;
+    slide.innerHTML = svg;
+    renderShortAnswerOverlay(q);
+    setStatus(`${activeSourceLabel()} · ${q.kind} · ${state.value.fontSize}pt`);
   } catch (error) {
     if (revision !== renderRevision) return; const message = error instanceof Error ? error.message : String(error); slide.innerHTML = `<div class="placeholder"><div><strong>Compile Typst chưa thành công.</strong><br><br>${escapeHtml(message)}</div></div>`; setStatus(message, true);
   }

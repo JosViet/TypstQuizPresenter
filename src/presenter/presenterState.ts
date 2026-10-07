@@ -4,6 +4,8 @@ export interface PresenterSnapshot {
   questions: QuizQuestion[];
   current: number;
   selectedChoice: number | null;
+  trueFalseSelections: Array<boolean | null>;
+  shortAnswerInput: string;
   revealAnswer: boolean;
   showSolution: boolean;
   fontSize: number;
@@ -18,6 +20,8 @@ export class PresenterState {
     questions: [],
     current: 0,
     selectedChoice: null,
+    trueFalseSelections: [],
+    shortAnswerInput: '',
     revealAnswer: false,
     showSolution: false,
     fontSize: 30,
@@ -30,6 +34,10 @@ export class PresenterState {
 
   private resetQuestionView(): void {
     this.value.selectedChoice = null;
+    this.value.trueFalseSelections = this.question?.kind === 'true-false'
+      ? this.question.choices.map(() => null)
+      : [];
+    this.value.shortAnswerInput = '';
     this.value.revealAnswer = false;
     this.value.showSolution = false;
     this.value.timerRemaining = this.value.timerSeconds;
@@ -78,6 +86,21 @@ export class PresenterState {
     if (index < 0 || index >= (this.question?.choices.length ?? 0)) return;
     this.value.selectedChoice = index;
     this.onChange();
+  }
+
+  selectTrueFalse(index: number, value: boolean): void {
+    if (this.value.revealAnswer || this.question?.kind !== 'true-false') return;
+    if (index < 0 || index >= (this.question?.choices.length ?? 0)) return;
+
+    const selections = [...this.value.trueFalseSelections];
+    selections[index] = value;
+    this.value.trueFalseSelections = selections;
+    this.onChange();
+  }
+
+  setShortAnswerInput(value: string): void {
+    if (this.value.revealAnswer || this.question?.kind !== 'short-answer') return;
+    this.value.shortAnswerInput = value;
   }
 
   reveal(): void {

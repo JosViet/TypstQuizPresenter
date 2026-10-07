@@ -45,3 +45,26 @@ test('generated document is a compact fixed 16:9 page', () => {
   assert.match(source, /height: 7\.5in/);
   assert.match(source, /margin: \(x: 18pt, y: 10pt\)/);
 });
+
+
+test('generated true-false document carries teacher selections', () => {
+  const tfQuestion: QuizQuestion = {
+    ...question,
+    id: 'fixture#tf',
+    kind: 'true-false',
+    choices: [
+      { raw: '$1 < 2$', correct: true },
+      { raw: '$3 < 1$', correct: false },
+    ],
+  };
+
+  const source = buildQuizDocument(tfQuestion, {
+    trueFalseSelections: [false, null],
+    revealAnswer: false,
+    showSolution: false,
+    fontSize: 28,
+  });
+
+  assert.match(source, /truths: \(true, false,\)/);
+  assert.match(source, /selections: \(false, none,\)/);
+});

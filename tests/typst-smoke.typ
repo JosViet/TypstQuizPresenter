@@ -27,6 +27,7 @@
     [$3 < 1$],
   ),
   truths: (true, false,),
+  selections: (false, false,),
   reveal: true,
   solution: [So sánh trực tiếp.],
   show-solution: true,

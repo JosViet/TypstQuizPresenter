@@ -2,7 +2,7 @@
 
 A teacher-led classroom quiz presenter for question banks authored in Typst.
 
-## Privacy-first architecture (v0.4)
+## Privacy-first architecture (v0.5)
 
 The production/classroom workflow is **local-first**:
 
@@ -76,7 +76,7 @@ npm run dev
 
 ## Current status
 
-`0.4.0`:
+`0.5.0`:
 
 - local workspace picker;
 - workspace validation;
@@ -99,3 +99,10 @@ npm run dev
 - The app is installable as a PWA and requests landscape standalone display.
 - A service worker caches the app shell and same-origin JS/WASM resources after the first online session. Local `.typ` workspace content is never cached by the service worker.
 - A remembered workspace handle is reopened automatically when permission is still granted; otherwise the UI asks for one tap to grant read permission again.
+
+
+## Question interaction
+
+- MCQ: tap one choice, then reveal correct/wrong colors.
+- True/False: each statement has Đ/S chips; selections lock after reveal and are compared visually to the canonical truth values.
+- Short answer: type into the on-slide input. After reveal, the app performs only basic normalized-string comparison; it is intentionally not a CAS and the canonical Typst answer remains authoritative.

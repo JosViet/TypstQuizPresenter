@@ -166,11 +166,64 @@
   }
 }
 
+#let _quiz-tf-chip(
+  label,
+  selected: false,
+  correct: false,
+  reveal: false,
+) = {
+  let is-correct = reveal and correct
+  let is-wrong = reveal and selected and not correct
+  let is-selected = selected and not reveal
+
+  let fill-color = if is-correct {
+    quiz-correct.lighten(88%)
+  } else if is-wrong {
+    quiz-wrong.lighten(90%)
+  } else if is-selected {
+    quiz-primary.lighten(90%)
+  } else {
+    quiz-soft
+  }
+
+  let border-color = if is-correct {
+    quiz-correct
+  } else if is-wrong {
+    quiz-wrong
+  } else if is-selected {
+    quiz-primary
+  } else {
+    quiz-border
+  }
+
+  let text-color = if is-correct {
+    quiz-correct
+  } else if is-wrong {
+    quiz-wrong
+  } else if is-selected {
+    quiz-primary
+  } else {
+    quiz-muted
+  }
+
+  box(
+    width: 100%,
+    inset: (x: 8pt, y: 5pt),
+    fill: fill-color,
+    stroke: 1.2pt + border-color,
+    radius: 7pt,
+    align(center)[
+      #text(size: 15pt, weight: "bold", fill: text-color)[#label]
+    ],
+  )
+}
+
 #let quiz-tf(
   number: 1,
   stem: [],
   statements: (),
   truths: (),
+  selections: (),
   reveal: false,
   solution: [],
   show-solution: false,
@@ -185,33 +238,39 @@
 
   for (i, statement) in statements.enumerate() {
     let truth = truths.at(i, default: false)
+    let selected = selections.at(i, default: none)
+
     block(
       width: 100%,
-      inset: 8pt,
-      fill: if reveal {
-        if truth { quiz-correct.lighten(90%) } else { quiz-wrong.lighten(92%) }
-      } else {
-        white
-      },
-      stroke: 1pt + if reveal {
-        if truth { quiz-correct } else { quiz-wrong }
-      } else {
-        quiz-border
-      },
+      inset: 7pt,
+      fill: white,
+      stroke: 1pt + quiz-border,
       radius: 7pt,
     )[
       #grid(
-        columns: if reveal { (38pt, 1fr, 76pt) } else { (38pt, 1fr) },
+        columns: (36pt, 1fr, 58pt, 58pt),
         column-gutter: 7pt,
+        align: (center + top, left + top, center, center),
         [#text(size: fs, weight: "bold", fill: quiz-primary)[#labels.at(i, default: str(i + 1)))]],
         [#text(size: fs)[#statement]],
-        if reveal [
-          #text(
-            size: 16pt,
-            weight: "bold",
-            fill: if truth { quiz-correct } else { quiz-wrong },
-          )[#if truth [ĐÚNG] else [SAI]]
-        ],
+        link(
+          "https://quiz.local/tf/" + str(i) + "/true",
+          _quiz-tf-chip(
+            "Đ",
+            selected: selected == true,
+            correct: truth,
+            reveal: reveal,
+          ),
+        ),
+        link(
+          "https://quiz.local/tf/" + str(i) + "/false",
+          _quiz-tf-chip(
+            "S",
+            selected: selected == false,
+            correct: not truth,
+            reveal: reveal,
+          ),
+        ),
       )
     ]
     v(6pt)

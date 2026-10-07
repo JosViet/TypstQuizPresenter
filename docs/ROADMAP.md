@@ -51,3 +51,13 @@ Deferred until presenter is stable: room code, phone responses, response histogr
 - [x] automatic recent-workspace reopen when permission remains granted;
 - [x] one-tap permission recovery when Android/Chrome requires it;
 - [x] remember last selected Typst source.
+
+
+## V0.5 — TF / short-answer interaction
+
+- [x] per-statement Đ/S touch chips before reveal;
+- [x] correct/wrong visual feedback for TF after reveal;
+- [x] short-answer input overlay for tablet/desktop;
+- [x] normalized textual comparison after reveal (not CAS);
+- [x] reset interaction state when changing question;
+- [x] regression tests + Typst smoke coverage.

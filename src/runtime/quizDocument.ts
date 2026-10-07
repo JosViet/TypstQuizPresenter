@@ -3,6 +3,7 @@ import { dirname } from './dependencyScanner.ts';
 
 export interface QuizRenderOptions {
   selectedChoice?: number | null;
+  trueFalseSelections?: Array<boolean | null>;
   revealAnswer: boolean;
   showSolution: boolean;
   fontSize: number;
@@ -69,6 +70,10 @@ export function buildQuizDocument(question: QuizQuestion, options: QuizRenderOpt
   if (question.kind === 'true-false') {
     const statements = question.choices.map(choice => content(choice.raw)).join(',\n    ');
     const truths = question.choices.map(choice => typstBool(choice.correct)).join(', ');
+    const selections = question.choices.map((_, index) => {
+      const value = options.trueFalseSelections?.[index];
+      return value === null || value === undefined ? 'none' : typstBool(value);
+    }).join(', ');
     return `${common}
 #quiz-tf(
   number: ${question.index + 1},
@@ -77,6 +82,7 @@ export function buildQuizDocument(question: QuizQuestion, options: QuizRenderOpt
     ${statements},
   ),
   truths: (${truths},),
+  selections: (${selections},),
   reveal: ${typstBool(options.revealAnswer)},
   solution: ${content(question.solution)},
   show-solution: ${typstBool(options.showSolution)},

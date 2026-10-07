@@ -17,13 +17,15 @@ This repository is **TypstQuizPresenter**, a runtime/presenter application. It i
 
 ## Current product scope
 
-v0.4 is a teacher-led tablet-first fullscreen quiz presenter:
+v0.5 is a teacher-led tablet-first fullscreen quiz presenter:
 - select/reopen a local `BienSoanTypst` workspace;
 - browse/filter local `.typ` sources;
 - parse questions;
 - render with Typst WASM and local libraries/assets;
 - fullscreen presentation;
 - click/select MCQ choices with visual state before reveal;
+- interactive true/false selections per statement;
+- short-answer text input with basic normalized-string comparison after reveal;
 - reveal answer and solution;
 - timer, keyboard navigation, and touch swipe navigation;
 - PWA install/offline app-shell support for Galaxy Tab / Chromium tablets;
