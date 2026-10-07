@@ -16,6 +16,7 @@ export interface PresenterSnapshot {
 
 export class PresenterState {
   private timer?: number;
+  private readonly onChange: () => void;
   value: PresenterSnapshot = {
     questions: [],
     current: 0,
@@ -30,7 +31,9 @@ export class PresenterState {
     timerRunning: false,
   };
 
-  constructor(private onChange: () => void) {}
+  constructor(onChange: () => void) {
+    this.onChange = onChange;
+  }
 
   private resetQuestionView(): void {
     this.value.selectedChoice = null;
