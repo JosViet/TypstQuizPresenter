@@ -90,11 +90,20 @@ function parseChoiceArgs(rawArgs: string | undefined): QuizChoice[] {
     }));
 }
 
-function parseQuestion(exCall: ParsedCall, index: number, sourcePath?: string): QuizQuestion {
+function parseQuestion(
+  exCall: ParsedCall,
+  trailingSource: string,
+  index: number,
+  sourcePath?: string,
+): QuizQuestion {
   const body = exCall.body ?? '';
-  const answerCalls = findCalls(body, ANSWER_MACROS).sort((a, b) => a.start - b.start);
-  const solutionCall = findCalls(body, new Set(['loigiai'])).sort((a, b) => a.start - b.start)[0];
-  const answer = answerCalls[0];
+  const bodyAnswerCalls = findCalls(body, ANSWER_MACROS).sort((a, b) => a.start - b.start);
+  const trailingAnswerCalls = findCalls(trailingSource, ANSWER_MACROS).sort((a, b) => a.start - b.start);
+  const bodySolutionCall = findCalls(body, new Set(['loigiai'])).sort((a, b) => a.start - b.start)[0];
+  const trailingSolutionCall = findCalls(trailingSource, new Set(['loigiai'])).sort((a, b) => a.start - b.start)[0];
+  const answer = bodyAnswerCalls[0] ?? trailingAnswerCalls[0];
+  const solutionCall = bodySolutionCall ?? trailingSolutionCall;
+  const answerIsInBody = bodyAnswerCalls.length > 0;
 
   let kind: QuizKind = 'unknown';
   let choices: QuizChoice[] = [];
@@ -113,8 +122,8 @@ function parseQuestion(exCall: ParsedCall, index: number, sourcePath?: string): 
     shortAnswer = firstPositional ? unwrapContent(firstPositional) : undefined;
   }
 
-  const contentEnd = solutionCall ? solutionCall.start : body.length;
-  const stemEnd = answer ? answer.start : contentEnd;
+  const contentEnd = bodySolutionCall ? bodySolutionCall.start : body.length;
+  const stemEnd = answerIsInBody && answer ? answer.start : contentEnd;
   const stem = body.slice(0, stemEnd).trim();
   const solution = solutionCall?.body?.trim();
   const metadata = parseMetadata(exCall.args);
@@ -136,7 +145,7 @@ function parseQuestion(exCall: ParsedCall, index: number, sourcePath?: string): 
 
 export function parseTypstQuiz(source: string, sourcePath?: string): QuizDocument {
   const macros = findMacros(source, new Set(['ex']));
-  const questions: QuizQuestion[] = [];
+  const exCalls: ParsedCall[] = [];
 
   for (const macro of macros) {
     let i = skipTrivia(source, macro.nameEnd);
@@ -148,16 +157,22 @@ export function parseTypstQuiz(source: string, sourcePath?: string): QuizDocumen
     }
     if (source[i] !== '[') continue;
     const body = readBalanced(source, i);
-    const end = body.end;
-    const exCall: ParsedCall = {
+    exCalls.push({
       name: 'ex',
       start: macro.hashStart,
-      end,
+      end: body.end,
       args,
       body: body.inner,
-    };
-    const question = parseQuestion(exCall, questions.length, sourcePath);
-    question.rawEx = source.slice(macro.hashStart, end);
+    });
+  }
+
+  const questions: QuizQuestion[] = [];
+  for (let index = 0; index < exCalls.length; index += 1) {
+    const exCall = exCalls[index]!;
+    const nextExStart = exCalls[index + 1]?.start ?? source.length;
+    const trailingSource = source.slice(exCall.end, nextExStart);
+    const question = parseQuestion(exCall, trailingSource, questions.length, sourcePath);
+    question.rawEx = source.slice(exCall.start, exCall.end);
     questions.push(question);
   }
 

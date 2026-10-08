@@ -76,7 +76,7 @@ npm run dev
 
 ## Current status
 
-`0.6.0`:
+`0.6.1`:
 
 - local workspace picker;
 - workspace validation;
@@ -124,3 +124,13 @@ The presenter is designed to survive frequent switching to another teaching app 
 - current question, selected answers, reveal state, font size and slide scroll position are kept while the app is backgrounded;
 - a running timer pauses automatically when the app goes to the background and never auto-resumes without the teacher;
 - fullscreen recovery is never shown in standalone/PWA mode.
+
+
+### v0.6.1 — Toán 12 parser compatibility
+
+The parser supports both authoring layouts used by the upstream repository:
+
+- answer macro nested inside `#ex[...]`;
+- answer macro placed immediately after `#ex[...]`, as used heavily by `Toan12/dataTN`.
+
+Adjacent `#choice`, `#choiceTF`, `#shortanswer` and `#loigiai` are associated with the preceding exercise up to the next `#ex`.

@@ -74,3 +74,39 @@ test('dependency scanner ignores examples inside comments and strings', () => {
     ],
   );
 });
+
+
+test('parses Toan12-style answers placed after #ex blocks', async () => {
+  const doc = parseTypstQuiz(await fixture('toan12-external-answers.typ'), 'Toan12/dataTN/fixture.typ');
+
+  assert.equal(doc.questions.length, 3);
+  assert.deepEqual(doc.questions.map(q => q.kind), ['mcq', 'true-false', 'short-answer']);
+
+  const mcq = doc.questions[0]!;
+  assert.equal(mcq.choices.length, 4);
+  assert.equal(mcq.choices.findIndex(choice => choice.correct), 1);
+  assert.match(mcq.solution ?? '', /Đáp án là/);
+
+  const tf = doc.questions[1]!;
+  assert.deepEqual(tf.choices.map(choice => choice.correct), [true, false, true, false]);
+  assert.match(tf.solution ?? '', /Kiểm tra từng mệnh đề/);
+
+  const short = doc.questions[2]!;
+  assert.equal(short.shortAnswer, '"0,5"');
+  assert.match(short.solution ?? '', /Kết quả/);
+});
+
+test('still prefers an answer nested inside the #ex body', () => {
+  const source = `
+#ex[
+  Câu có đáp án bên trong.
+  #choice([$A$], T[$B$], [$C$], [$D$])
+]
+#loigiai[Giải.]
+`;
+
+  const doc = parseTypstQuiz(source);
+  assert.equal(doc.questions[0]!.kind, 'mcq');
+  assert.equal(doc.questions[0]!.choices.findIndex(choice => choice.correct), 1);
+  assert.equal(doc.questions[0]!.stem.includes('#choice'), false);
+});

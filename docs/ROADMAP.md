@@ -80,3 +80,12 @@ Deferred until presenter is stable: room code, phone responses, response histogr
 - [x] never auto-resume timer after returning;
 - [x] keep question/answer/reveal state unchanged on visibility/fullscreen changes;
 - [x] regression coverage for fullscreen recovery decision and timer pause.
+
+
+## V0.6.1 — Toán 12 parser compatibility
+
+- [x] associate answer macros immediately following an `#ex` block;
+- [x] support external MCQ, true/false and short-answer macros;
+- [x] associate external `#loigiai` with the preceding question;
+- [x] retain support for answer macros nested inside `#ex`;
+- [x] regression fixture matching the Toán 12 dataTN layout.
