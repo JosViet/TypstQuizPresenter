@@ -64,6 +64,8 @@
     Câu có hình CeTZ thật.
     #align(center)[
       #quiz-figure(scale-factor: 120%)[
+        // The question is 30pt, but CeTZ labels should inherit 11pt.
+        #context { assert(text.size == 11pt) }
         #cetz-canvas(length: 0.68cm, {
           import draw: *
           let A = (0, 0)
