@@ -1,3 +1,4 @@
+#import "@preview/cetz:0.5.2": canvas as cetz-canvas
 #import "../typst-runtime/quiz-runtime.typ": quiz-mcq, quiz-tf, quiz-short, quiz-figure
 
 #quiz-mcq(
@@ -52,3 +53,38 @@
 #quiz-figure(scale-factor: 120%)[
   #rect(width: 50pt, height: 30pt, fill: rgb("#dbeafe"))
 ]
+
+
+#pagebreak()
+
+#quiz-mcq(
+  number: 4,
+  stem: [
+    Câu có hình CeTZ thật.
+    #align(center)[
+      #quiz-figure(scale-factor: 120%)[
+        #cetz-canvas(length: 0.68cm, {
+          import draw: *
+          let A = (0, 0)
+          let B = (3, 0)
+          let C = (2, 2)
+          line(A, B, C, close: true)
+          content(A, [$A$], anchor: "east")
+          content(B, [$B$], anchor: "west")
+          content(C, [$C$], anchor: "south")
+        })
+      ]
+    ]
+  ],
+  choices: (
+    [$30 degree$],
+    [$45 degree$],
+    [$60 degree$],
+    [$120 degree$],
+  ),
+  correct: 2,
+  reveal: false,
+  solution: [],
+  show-solution: false,
+  font-size: 30pt,
+)
