@@ -161,3 +161,9 @@ Adjacent `#choice`, `#choiceTF`, `#shortanswer` and `#loigiai` are associated wi
 5. Figures can be overridden individually up to **200%**, including 160%, 180% and 200%. Auto scale also supports 200% at 60pt+, keeping 30pt=100%.
 
 The host browser address/tab bars are still controlled by Android/Chrome; only an installed PWA or optional Fullscreen API can hide them.
+
+
+### v0.8.1 — MCQ fraction layout correction
+
+- Increased measured vertical inset in MCQ option cards, proportional to the font size, to prevent large mathematical fractions from protruding outside choice borders.
+- Added a real Typst regression using the fraction layout from Toán 12 question 12; original source files remain unchanged.

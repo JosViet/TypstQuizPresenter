@@ -81,7 +81,10 @@
 
   block(
     width: 100%,
-    inset: (x: 11pt, y: 7pt),
+    // Inline display-sized math (e.g. dfrac) may extend above and below
+    // the typographic line box. Reserve extra *measured* vertical space so
+    // numerators/denominators stay inside the interactive option border.
+    inset: (x: 11pt, y: calc.max(16pt, font-size * 0.6)),
     fill: option-fill,
     stroke: 1.2pt + option-stroke,
     radius: 9pt,

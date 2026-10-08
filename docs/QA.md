@@ -89,3 +89,11 @@
 - Empty or failed parses do not auto-enter presentation
 - Figure manual overrides list 160%, 180% and 200%; Auto can reach 200% at 60pt
 - Test at Galaxy Tab S10 landscape and Chrome tab after switching to classroom name picker/score app
+
+
+## v0.8.1 — Fraction overflow regression
+
+- Reproduce Toan12/dataDVKT/2C2-B6-DVKT5.typ, question 12, including options with inline $dfrac(a^2,2)$ and negative fraction.
+- The MCQ option reserves font-relative vertical padding so numerator and denominator do not touch/overflow the rounded choice border.
+- Typst CLI smoke includes the exact math pattern and checks minimum measured option height.
+- Check at 24/30/36pt on Galaxy Tab S10; regular text options should still align badges vertically.

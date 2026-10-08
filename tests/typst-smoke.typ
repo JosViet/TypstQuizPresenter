@@ -1,6 +1,6 @@
 #import "@preview/cetz:0.5.2": canvas as cetz-canvas, draw as cetz-draw
 #let draw = cetz-draw
-#import "../typst-runtime/quiz-runtime.typ": quiz-mcq, quiz-tf, quiz-short, quiz-figure
+#import "../typst-runtime/quiz-runtime.typ": quiz-mcq, quiz-tf, quiz-short, quiz-figure, _quiz-option
 
 #quiz-mcq(
   number: 1,
@@ -91,3 +91,32 @@
   show-solution: false,
   font-size: 30pt,
 )
+
+
+#pagebreak()
+
+// Regression: display-sized fractions must not protrude outside MCQ options.
+#quiz-mcq(
+  number: 12,
+  stem: [Cho tứ diện đều $A B C D$. Giá trị $arrow(A B) dot arrow(C D)$ bằng],
+  choices: (
+    [$0$],
+    [$dfrac(a^2, 2)$],
+    [$-dfrac(a^2, 2)$],
+    [$a^2$],
+  ),
+  correct: 0,
+  selected: none,
+  reveal: false,
+  solution: [],
+  show-solution: false,
+  font-size: 30pt,
+)
+
+// Keep adequate vertical room for a tall inline expression in the option.
+// This catches regressions to 7pt padding even when compilation succeeds.
+#context {
+  let rendered = _quiz-option("B", [$dfrac(a^2, 2)$], font-size: 30pt)
+  let measured = measure(rendered, width: 340pt)
+  assert(measured.height > 62pt)
+}
