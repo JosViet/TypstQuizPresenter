@@ -134,3 +134,35 @@ test('preserves enclosing immini when answer macro is nested inside it', () => {
   assert.equal(q.stem.includes('#choice'), false);
   assert.equal(q.choices.findIndex(choice => choice.correct), 1);
 });
+
+
+test('math primes do not break macro scanning', () => {
+  const source = `
+#ex[
+  Cho hình lập phương $A B C D . A' B' C' D'$. Xét $arrow(B' C)$.
+  #align(center)[
+    #canvas(length: 0.68cm, {
+      let A1 = (0, 3.8)
+      let B1 = (-1.3, 2.8)
+      point-label("A'", A1)
+      point-label("B'", B1)
+    })
+  ]
+]
+#choice([$30 degree$], [$45 degree$], T[$60 degree$], [$120 degree$])
+#loigiai[
+  $(arrow(B D), arrow(B' C)) = 60 degree$.
+]
+
+#ex[
+  Câu sau vẫn phải được scanner nhìn thấy.
+]
+#shortanswer("2")
+`;
+
+  const doc = parseTypstQuiz(source);
+  assert.equal(doc.questions.length, 2);
+  assert.equal(doc.questions[0]!.kind, 'mcq');
+  assert.equal(doc.questions[1]!.kind, 'short-answer');
+  assert.match(doc.questions[0]!.stem, /#canvas/);
+});
