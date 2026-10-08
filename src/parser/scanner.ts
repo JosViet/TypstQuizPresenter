@@ -42,7 +42,7 @@ export function readBalanced(source: string, start: number): BalancedResult {
   }
 
   const stack: string[] = [closer];
-  let inString: '"' | "'" | null = null;
+  let inString: '"' | null = null;
   let escaped = false;
   let inMath = false;
   let i = start + 1;
@@ -77,7 +77,7 @@ export function readBalanced(source: string, start: number): BalancedResult {
       continue;
     }
 
-    if (ch === '"' || ch === "'") {
+    if (ch === '"') {
       inString = ch;
       i += 1;
       continue;
@@ -119,7 +119,7 @@ export function splitTopLevel(source: string, delimiter = ','): string[] {
   const out: string[] = [];
   let start = 0;
   const stack: string[] = [];
-  let inString: '"' | "'" | null = null;
+  let inString: '"' | null = null;
   let escaped = false;
   let inMath = false;
   let i = 0;
@@ -146,7 +146,7 @@ export function splitTopLevel(source: string, delimiter = ','): string[] {
       continue;
     }
 
-    if (ch === '"' || ch === "'") {
+    if (ch === '"') {
       inString = ch;
       i += 1;
       continue;
@@ -187,7 +187,7 @@ export interface MacroOccurrence {
 export function findMacros(source: string, wanted?: Set<string>): MacroOccurrence[] {
   const out: MacroOccurrence[] = [];
   let i = 0;
-  let inString: '"' | "'" | null = null;
+  let inString: '"' | null = null;
   let escaped = false;
   let inMath = false;
 
@@ -211,7 +211,7 @@ export function findMacros(source: string, wanted?: Set<string>): MacroOccurrenc
       i = end < 0 ? source.length : end + 2;
       continue;
     }
-    if (ch === '"' || ch === "'") {
+    if (ch === '"') {
       inString = ch;
       i += 1;
       continue;
