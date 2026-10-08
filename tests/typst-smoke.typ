@@ -1,4 +1,5 @@
-#import "@preview/cetz:0.5.2": canvas as cetz-canvas
+#import "@preview/cetz:0.5.2": canvas as cetz-canvas, draw as cetz-draw
+#let draw = cetz-draw
 #import "../typst-runtime/quiz-runtime.typ": quiz-mcq, quiz-tf, quiz-short, quiz-figure
 
 #quiz-mcq(
