@@ -41,7 +41,7 @@ function readIdentifier(source: string, offset: number): { name: string; end: nu
 
 function readQuotedString(source: string, offset: number): { value: string; end: number } | undefined {
   const quote = source[offset];
-  if (quote !== '"' && quote !== "'") return undefined;
+  if (quote !== '"') return undefined;
 
   let i = offset + 1;
   let value = '';
@@ -110,7 +110,7 @@ export function scanDependencies(source: string): DependencyRef[] {
     }
 
     const ch = source[i] ?? '';
-    if (ch === '"' || ch === "'") {
+    if (ch === '"') {
       i = skipString(source, i);
       continue;
     }
