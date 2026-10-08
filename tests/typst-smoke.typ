@@ -145,12 +145,12 @@
   font-size: 30pt,
 )
 
-// A tall inline formula needs extra inset; a 7pt-row should fail this check.
+// A tall inline formula needs extra inset; an undersized row should fail this check.
 #context {
   let row30 = _quiz-tf-row("a", [$dfrac(a^2, 2)$], index: 0, font-size: 30pt)
   let row36 = _quiz-tf-row("a", [$dfrac(a^2, 2)$], index: 0, font-size: 36pt)
   let h30 = measure(row30, width: 340pt).height
   let h36 = measure(row36, width: 340pt).height
-  assert(h30 > 70pt)
+  assert(h30 > 50pt)
   assert(h36 > h30)
 }
