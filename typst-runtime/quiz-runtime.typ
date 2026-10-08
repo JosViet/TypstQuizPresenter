@@ -8,6 +8,11 @@
 #let quiz-muted = rgb("#64748b")
 #let quiz-soft = rgb("#f8fafc")
 
+// The exercise stem is usually set to 30pt or more for classroom display.
+// CeTZ point-label() inherits that font size, but its geometry uses a fixed
+// coordinate unit (often 0.6–0.7cm). Reset figure typography to the original
+// document base size BEFORE scaling the whole figure. This keeps labels and
+// geometry proportional, including after a teacher adjusts font size.
 #let quiz-figure(scale-factor: 100%, body) = {
   link(
     "https://quiz.local/figure",
@@ -16,7 +21,7 @@
       y: scale-factor,
       origin: center + horizon,
       reflow: true,
-      body,
+      text(size: 11pt, body),
     ),
   )
 }
