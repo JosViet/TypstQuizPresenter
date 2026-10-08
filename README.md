@@ -2,7 +2,7 @@
 
 A teacher-led classroom quiz presenter for question banks authored in Typst.
 
-## Privacy-first architecture (v0.6)
+## Privacy-first architecture (v0.7)
 
 The production/classroom workflow is **local-first**:
 
@@ -76,7 +76,7 @@ npm run dev
 
 ## Current status
 
-`0.6.1`:
+`0.7.0`:
 
 - local workspace picker;
 - workspace validation;
@@ -134,3 +134,12 @@ The parser supports both authoring layouts used by the upstream repository:
 - answer macro placed immediately after `#ex[...]`, as used heavily by `Toan12/dataTN`.
 
 Adjacent `#choice`, `#choiceTF`, `#shortanswer` and `#loigiai` are associated with the preceding exercise up to the next `#ex`.
+
+
+## Figure scaling and tap-to-zoom
+
+- Figure scale defaults to **Auto**: 30pt text = 100%, with proportional scaling clamped to 70–150%.
+- Per-question overrides are available at 80%, 100%, 120% and 140%; returning to a previously adjusted question restores its override.
+- Presenter instrumentation wraps CeTZ `#canvas`, direct `#image`, and the figure body of `#immini` without modifying `BienSoanTypst`.
+- Tapping a rendered figure opens a large in-app lightbox. Tapping the enlarged figure or backdrop closes it.
+- Answer macros nested inside `#immini` are removed from the stem without breaking the surrounding figure layout.

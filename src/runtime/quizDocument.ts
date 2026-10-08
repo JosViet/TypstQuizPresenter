@@ -1,5 +1,6 @@
 import type { QuizQuestion } from '../model/quiz.ts';
 import { dirname } from './dependencyScanner.ts';
+import { instrumentFigures, resolveFigureScale } from './figureInstrumenter.ts';
 
 export interface QuizRenderOptions {
   selectedChoice?: number | null;
@@ -7,11 +8,16 @@ export interface QuizRenderOptions {
   revealAnswer: boolean;
   showSolution: boolean;
   fontSize: number;
+  figureScaleOverride?: number | null;
   theme?: 'light' | 'dark';
 }
 
 function content(raw: string | undefined): string {
   return `[${raw ?? ''}]`;
+}
+
+function stemContent(raw: string | undefined, scale: number): string {
+  return content(instrumentFigures(raw, scale));
 }
 
 function typstBool(value: boolean): string {
@@ -31,10 +37,11 @@ export function generatedMainPath(question: QuizQuestion): string {
 
 export function buildQuizDocument(question: QuizQuestion, options: QuizRenderOptions): string {
   const fs = fontSizeValue(options.fontSize);
+  const figureScale = resolveFigureScale(fs, options.figureScaleOverride);
   const common = `
 #import "/de-thi.typ": *
 #import "/vietdoc.typ": *
-#import "/__quiz_runtime.typ": quiz-mcq, quiz-tf, quiz-short
+#import "/__quiz_runtime.typ": quiz-mcq, quiz-tf, quiz-short, quiz-figure
 
 #set page(
   width: 13.333in,
@@ -53,7 +60,7 @@ export function buildQuizDocument(question: QuizQuestion, options: QuizRenderOpt
     return `${common}
 #quiz-mcq(
   number: ${question.index + 1},
-  stem: ${content(question.stem)},
+  stem: ${stemContent(question.stem, figureScale)},
   choices: (
     ${choices},
   ),
@@ -77,7 +84,7 @@ export function buildQuizDocument(question: QuizQuestion, options: QuizRenderOpt
     return `${common}
 #quiz-tf(
   number: ${question.index + 1},
-  stem: ${content(question.stem)},
+  stem: ${stemContent(question.stem, figureScale)},
   statements: (
     ${statements},
   ),
@@ -95,7 +102,7 @@ export function buildQuizDocument(question: QuizQuestion, options: QuizRenderOpt
     return `${common}
 #quiz-short(
   number: ${question.index + 1},
-  stem: ${content(question.stem)},
+  stem: ${stemContent(question.stem, figureScale)},
   answer: ${content(question.shortAnswer)},
   reveal: ${typstBool(options.revealAnswer)},
   solution: ${content(question.solution)},
@@ -108,7 +115,7 @@ export function buildQuizDocument(question: QuizQuestion, options: QuizRenderOpt
   return `${common}
 #quiz-short(
   number: ${question.index + 1},
-  stem: ${content(question.stem || question.rawEx)},
+  stem: ${stemContent(question.stem || question.rawEx, figureScale)},
   answer: [],
   reveal: false,
   solution: ${content(question.solution)},

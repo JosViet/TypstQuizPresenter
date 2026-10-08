@@ -10,6 +10,7 @@ import { installSwipeNavigation } from './presenter/touchNavigation.ts';
 import { isStandalone, setupPwa } from './pwa.ts';
 import { shortAnswerMatches } from './presenter/answerCompare.ts';
 import { shouldOfferFullscreenRecovery } from './presenter/presentationLifecycle.ts';
+import { resolveFigureScale } from './runtime/figureInstrumenter.ts';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const renderer = new TypstQuizRenderer();
@@ -64,6 +65,7 @@ app.innerHTML = `
       <button class="btn" id="previous">←</button><span class="counter" id="counter">0 / 0</span><button class="btn" id="next">→</button><button class="btn reset-first" id="resetQuiz">↺ Câu 1</button><button class="btn primary" id="reveal">Hiện đáp án</button>
       <span class="spacer"></span><span class="active-source" id="activeSource">Chưa có nguồn</span>
       <label class="muted">Cỡ chữ</label><input id="fontSize" class="font-size-input" type="number" min="10" max="72" step="0.5" value="30" inputmode="decimal" />
+      <label class="muted">Hình</label><select id="figureScale" class="figure-scale-select"><option value="auto" selected>Auto</option><option value="0.8">80%</option><option value="1">100%</option><option value="1.2">120%</option><option value="1.4">140%</option></select>
       <label class="muted">Timer</label><select id="timerSeconds" style="width:auto"><option>30</option><option selected>45</option><option>60</option><option>90</option></select>
       <button class="btn" id="timerToggle">Start</button><button class="btn" id="timerReset">Reset timer</button><span class="timer" id="timer">00:45</span><button class="btn preparation-only" id="fullscreen">Fullscreen</button><button class="btn presentation-only danger-soft" id="exitPresentation">Thoát</button>
     </div>
@@ -75,6 +77,12 @@ app.innerHTML = `
       </span>
     </button>
     <div class="return-notice" id="returnNotice" hidden></div>
+    <div class="figure-lightbox" id="figureLightbox" hidden role="button" tabindex="0" aria-label="Thu nhỏ hình">
+      <div class="figure-lightbox-card">
+        <div class="figure-zoom-content" id="figureZoomContent"></div>
+        <div class="figure-zoom-hint">Chạm hình hoặc nền để thu nhỏ</div>
+      </div>
+    </div>
     <section class="stage"><div class="slide-shell" id="slide"><div class="placeholder">Chọn workspace và nạp một file Typst.</div></div></section>
   </main>
 </div>`;
@@ -87,6 +95,7 @@ const workspaceSelect = $('#workspaceFiles') as HTMLSelectElement;
 const workspaceLoadButton = $('#loadWorkspaceFile') as HTMLButtonElement;
 const recentWorkspaceButton = $('#openRecentWorkspace') as HTMLButtonElement;
 const fontSizeInput = $('#fontSize') as HTMLInputElement;
+const figureScaleSelect = $('#figureScale') as HTMLSelectElement;
 const slideElement = $('#slide');
 const appElement = $('.app');
 const stageWrapElement = $('#stageWrap');
@@ -95,6 +104,8 @@ const startPresentationButton = $('#startPresentation') as HTMLButtonElement;
 const installAppButton = $('#installApp') as HTMLButtonElement;
 const fullscreenRecoveryButton = $('#fullscreenRecovery') as HTMLButtonElement;
 const returnNotice = $('#returnNotice');
+const figureLightbox = $('#figureLightbox');
+const figureZoomContent = $('#figureZoomContent');
 
 function setStatus(message: string, error = false): void { statusMessage = message; statusError = error; const el = $('#status'); el.textContent = message; el.classList.toggle('error', error); }
 function formatTime(seconds: number): string { return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`; }
@@ -164,14 +175,80 @@ type SlideInteraction =
   | { kind: 'mcq'; index: number }
   | { kind: 'tf'; index: number; value: boolean };
 
+function anchorHref(anchor: Element): string {
+  return anchor.getAttribute('href')
+    ?? anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href')
+    ?? '';
+}
+
+function figureAnchorFromTarget(target: EventTarget | null): SVGGraphicsElement | undefined {
+  if (!(target instanceof Element)) return undefined;
+  const anchor = target.closest('a');
+  if (!(anchor instanceof SVGGraphicsElement)) return undefined;
+  return /quiz\.local\/figure/.test(anchorHref(anchor)) ? anchor : undefined;
+}
+
+function figureBoundsInRoot(element: SVGGraphicsElement): { x: number; y: number; width: number; height: number } | undefined {
+  try {
+    const box = element.getBBox();
+    const matrix = element.getCTM();
+    if (!matrix || box.width <= 0 || box.height <= 0) return undefined;
+
+    const points = [
+      [box.x, box.y],
+      [box.x + box.width, box.y],
+      [box.x, box.y + box.height],
+      [box.x + box.width, box.y + box.height],
+    ].map(([x, y]) => ({
+      x: matrix.a * x! + matrix.c * y! + matrix.e,
+      y: matrix.b * x! + matrix.d * y! + matrix.f,
+    }));
+
+    const xs = points.map(point => point.x);
+    const ys = points.map(point => point.y);
+    const x = Math.min(...xs);
+    const y = Math.min(...ys);
+    return {
+      x,
+      y,
+      width: Math.max(...xs) - x,
+      height: Math.max(...ys) - y,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function closeFigureZoom(): void {
+  figureLightbox.hidden = true;
+  figureZoomContent.replaceChildren();
+}
+
+function openFigureZoom(anchor: SVGGraphicsElement): void {
+  const root = anchor.closest('svg');
+  if (!(root instanceof SVGSVGElement)) return;
+
+  const clone = root.cloneNode(true) as SVGSVGElement;
+  const bounds = figureBoundsInRoot(anchor);
+  if (bounds) {
+    const pad = Math.max(bounds.width, bounds.height) * 0.08;
+    clone.setAttribute('viewBox', `${bounds.x - pad} ${bounds.y - pad} ${bounds.width + pad * 2} ${bounds.height + pad * 2}`);
+  }
+  clone.removeAttribute('width');
+  clone.removeAttribute('height');
+  clone.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  clone.classList.add('figure-zoom-svg');
+
+  figureZoomContent.replaceChildren(clone);
+  figureLightbox.hidden = false;
+}
+
 function interactionFromTarget(target: EventTarget | null): SlideInteraction | undefined {
   if (!(target instanceof Element)) return undefined;
   const anchor = target.closest('a');
   if (!anchor) return undefined;
 
-  const href = anchor.getAttribute('href')
-    ?? anchor.getAttributeNS('http://www.w3.org/1999/xlink', 'href')
-    ?? '';
+  const href = anchorHref(anchor);
 
   const choice = href.match(/quiz\.local\/choice\/(\d+)/);
   if (choice) {
@@ -190,12 +267,28 @@ function interactionFromTarget(target: EventTarget | null): SlideInteraction | u
 }
 
 slideElement.addEventListener('click', event => {
+  const figureAnchor = figureAnchorFromTarget(event.target);
+  if (figureAnchor) {
+    event.preventDefault();
+    event.stopPropagation();
+    openFigureZoom(figureAnchor);
+    return;
+  }
+
   const interaction = interactionFromTarget(event.target);
   if (!interaction) return;
 
   event.preventDefault();
   if (interaction.kind === 'mcq') state.selectChoice(interaction.index);
   else state.selectTrueFalse(interaction.index, interaction.value);
+});
+
+figureLightbox.addEventListener('click', closeFigureZoom);
+figureLightbox.addEventListener('keydown', event => {
+  if (event.key === 'Enter' || event.key === ' ' || event.key === 'Escape') {
+    event.preventDefault();
+    closeFigureZoom();
+  }
 });
 
 function renderShortAnswerOverlay(question: QuizQuestion): void {
@@ -254,8 +347,12 @@ async function renderSlide(): Promise<void> {
   const q = state.question; const slide = $('#slide');
   if (!q) { lastSlideSignature = ''; slide.innerHTML = '<div class="placeholder">Chọn workspace và nạp một file Typst.</div>'; return; }
   const tfSignature = state.value.trueFalseSelections.map(value => value === null ? 'n' : value ? 't' : 'f').join('');
-  const signature = [activeMode, workspace?.cacheKey ?? '', q.id, state.value.selectedChoice ?? 'none', tfSignature, state.value.revealAnswer, state.value.showSolution, state.value.fontSize].join('|');
-  if (signature === lastSlideSignature) return; lastSlideSignature = signature; const revision = ++renderRevision; slide.innerHTML = '<div class="placeholder">Đang compile Typst…</div>';
+  const figureOverride = state.currentFigureScaleOverride();
+  const figureScale = resolveFigureScale(state.value.fontSize, figureOverride);
+  const signature = [activeMode, workspace?.cacheKey ?? '', q.id, state.value.selectedChoice ?? 'none', tfSignature, state.value.revealAnswer, state.value.showSolution, state.value.fontSize, figureScale].join('|');
+  if (signature === lastSlideSignature) return;
+  closeFigureZoom();
+  lastSlideSignature = signature; const revision = ++renderRevision; slide.innerHTML = '<div class="placeholder">Đang compile Typst…</div>';
   try {
     const svg = await renderer.render(q, {
       selectedChoice: state.value.selectedChoice,
@@ -263,12 +360,13 @@ async function renderSlide(): Promise<void> {
       revealAnswer: state.value.revealAnswer,
       showSolution: state.value.showSolution,
       fontSize: state.value.fontSize,
+      figureScaleOverride: figureOverride,
       theme: 'light',
     });
     if (revision !== renderRevision) return;
     slide.innerHTML = svg;
     renderShortAnswerOverlay(q);
-    setStatus(`${activeSourceLabel()} · ${q.kind} · ${state.value.fontSize}pt`);
+    setStatus(`${activeSourceLabel()} · ${q.kind} · ${state.value.fontSize}pt · hình ${Math.round(figureScale * 100)}%`);
   } catch (error) {
     if (revision !== renderRevision) return; const message = error instanceof Error ? error.message : String(error); slide.innerHTML = `<div class="placeholder"><div><strong>Compile Typst chưa thành công.</strong><br><br>${escapeHtml(message)}</div></div>`; setStatus(message, true);
   }
@@ -284,7 +382,9 @@ function renderApp(): void {
   $('#counter').textContent = state.value.questions.length ? `${state.value.current + 1} / ${state.value.questions.length}` : '0 / 0';
   ($('#previous') as HTMLButtonElement).disabled = state.value.current <= 0; ($('#next') as HTMLButtonElement).disabled = state.value.current >= state.value.questions.length - 1;
   ($('#reveal') as HTMLButtonElement).textContent = !state.value.revealAnswer ? 'Hiện đáp án' : !state.value.showSolution ? 'Hiện lời giải' : 'Đã hiện lời giải';
-  fontSizeInput.value = String(state.value.fontSize); ($('#timerSeconds') as HTMLSelectElement).value = String(state.value.timerSeconds); $('#timer').textContent = formatTime(state.value.timerRemaining); $('#timer').classList.toggle('danger', state.value.timerRemaining <= 10); ($('#timerToggle') as HTMLButtonElement).textContent = state.value.timerRunning ? 'Pause' : 'Start'; $('#activeSource').textContent = activeSourceLabel();
+  fontSizeInput.value = String(state.value.fontSize);
+  figureScaleSelect.value = state.currentFigureScaleOverride() === null ? 'auto' : String(state.currentFigureScaleOverride());
+  ($('#timerSeconds') as HTMLSelectElement).value = String(state.value.timerSeconds); $('#timer').textContent = formatTime(state.value.timerRemaining); $('#timer').classList.toggle('danger', state.value.timerRemaining <= 10); ($('#timerToggle') as HTMLButtonElement).textContent = state.value.timerRunning ? 'Pause' : 'Start'; $('#activeSource').textContent = activeSourceLabel();
   startPresentationButton.disabled = state.value.questions.length === 0;
   appElement.classList.toggle('presenting', presentationMode);
   renderQuestionList(); $('#status').textContent = statusMessage; $('#status').classList.toggle('error', statusError); void renderSlide();
@@ -330,7 +430,7 @@ $('#loadGithub').addEventListener('click', async () => {
   try { renderer.setWorkspace(undefined); activeMode = 'github'; workspace = undefined; sourceText = await upstream.loadTextSource(path); sourcePath = path; sourceArea.value = sourceText; const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; setStatus(`GitHub dev/demo · ${path} · ${doc.questions.length} câu.`); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
 });
 
-$('#parseSource').addEventListener('click', parseCurrentSource); $('#previous').addEventListener('click', () => state.previous()); $('#next').addEventListener('click', () => state.next()); $('#resetQuiz').addEventListener('click', () => state.resetToFirst()); $('#reveal').addEventListener('click', () => state.reveal()); fontSizeInput.addEventListener('change', () => state.setFontSize(Number(fontSizeInput.value))); $('#timerSeconds').addEventListener('change', event => state.setTimer(Number((event.target as HTMLSelectElement).value))); $('#timerToggle').addEventListener('click', () => state.toggleTimer()); $('#timerReset').addEventListener('click', () => state.resetTimer());
+$('#parseSource').addEventListener('click', parseCurrentSource); $('#previous').addEventListener('click', () => state.previous()); $('#next').addEventListener('click', () => state.next()); $('#resetQuiz').addEventListener('click', () => state.resetToFirst()); $('#reveal').addEventListener('click', () => state.reveal()); fontSizeInput.addEventListener('change', () => state.setFontSize(Number(fontSizeInput.value))); figureScaleSelect.addEventListener('change', () => state.setFigureScaleOverride(figureScaleSelect.value === 'auto' ? null : Number(figureScaleSelect.value))); $('#timerSeconds').addEventListener('change', event => state.setTimer(Number((event.target as HTMLSelectElement).value))); $('#timerToggle').addEventListener('click', () => state.toggleTimer()); $('#timerReset').addEventListener('click', () => state.resetTimer());
 startPresentationButton.addEventListener('click', () => void enterPresentation());
 $('#exitPresentation').addEventListener('click', () => void exitPresentation());
 $('#fullscreen').addEventListener('click', async () => { const target = stageWrapElement; if (!document.fullscreenElement) await target.requestFullscreen(); else await document.exitFullscreen(); });

@@ -68,3 +68,27 @@ test('generated true-false document carries teacher selections', () => {
   assert.match(source, /truths: \(true, false,\)/);
   assert.match(source, /selections: \(false, none,\)/);
 });
+
+
+test('auto-scales figures with font size and allows manual override', () => {
+  const figureQuestion: QuizQuestion = {
+    ...question,
+    id: 'fixture#figure',
+    stem: 'Quan sát hình #canvas(length: 1cm, { }) rồi chọn đáp án.',
+  };
+
+  const autoSource = buildQuizDocument(figureQuestion, {
+    revealAnswer: false,
+    showSolution: false,
+    fontSize: 36,
+  });
+  assert.match(autoSource, /quiz-figure\(scale-factor: 120%\)/);
+
+  const manualSource = buildQuizDocument(figureQuestion, {
+    revealAnswer: false,
+    showSolution: false,
+    fontSize: 36,
+    figureScaleOverride: 0.8,
+  });
+  assert.match(manualSource, /quiz-figure\(scale-factor: 80%\)/);
+});

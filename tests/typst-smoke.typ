@@ -1,4 +1,4 @@
-#import "../typst-runtime/quiz-runtime.typ": quiz-mcq, quiz-tf, quiz-short
+#import "../typst-runtime/quiz-runtime.typ": quiz-mcq, quiz-tf, quiz-short, quiz-figure
 
 #quiz-mcq(
   number: 1,
@@ -45,3 +45,10 @@
   show-solution: true,
   font-size: 34pt,
 )
+
+
+#pagebreak()
+
+#quiz-figure(scale-factor: 120%)[
+  #rect(width: 50pt, height: 30pt, fill: rgb("#dbeafe"))
+]

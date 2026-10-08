@@ -17,7 +17,7 @@ This repository is **TypstQuizPresenter**, a runtime/presenter application. It i
 
 ## Current product scope
 
-v0.6 is a teacher-led tablet-first quiz presenter optimized for switching between teaching apps:
+v0.7 is a teacher-led tablet-first quiz presenter optimized for switching between teaching apps and figure-heavy math questions:
 - select/reopen a local `BienSoanTypst` workspace;
 - browse/filter local `.typ` sources;
 - parse questions;
@@ -31,6 +31,8 @@ v0.6 is a teacher-led tablet-first quiz presenter optimized for switching betwee
 - PWA install/offline app-shell support for Galaxy Tab / Chromium tablets;
 - one-tap fullscreen recovery after Chrome loses fullscreen during app/tab switching;
 - automatic timer pause and context preservation while backgrounded;
+- automatic/manual figure scaling tied to presentation font size;
+- tap-to-zoom lightbox for instrumented figures;
 - remember the directory handle in IndexedDB when the browser permits it.
 
 Live multiplayer/student phones are intentionally deferred until the presenter is stable.
@@ -43,3 +45,7 @@ The app shell may be hosted publicly because the exercise bank is not part of th
 
 12. Treat cross-app switching as a normal classroom workflow. Do not reset the current question or interaction state on visibility/fullscreen changes.
 13. In installed standalone/PWA mode, presentation must not require the Fullscreen API. Browser fullscreen is fallback behavior for normal tabs only.
+
+14. Figure presentation changes must be runtime-only. Do not rewrite upstream `BienSoanTypst` sources merely to resize classroom figures.
+15. Auto figure scaling uses 30pt = 100% and clamps to 70–150%; manual figure overrides are per question.
+16. Figure click instrumentation must not interfere with MCQ/TF answer links.

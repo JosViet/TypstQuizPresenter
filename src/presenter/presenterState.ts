@@ -9,6 +9,7 @@ export interface PresenterSnapshot {
   revealAnswer: boolean;
   showSolution: boolean;
   fontSize: number;
+  figureScaleOverrides: Record<string, number>;
   timerSeconds: number;
   timerRemaining: number;
   timerRunning: boolean;
@@ -26,6 +27,7 @@ export class PresenterState {
     revealAnswer: false,
     showSolution: false,
     fontSize: 30,
+    figureScaleOverrides: {},
     timerSeconds: 45,
     timerRemaining: 45,
     timerRunning: false,
@@ -50,6 +52,7 @@ export class PresenterState {
     this.stopTimer();
     this.value.questions = questions;
     this.value.current = 0;
+    this.value.figureScaleOverrides = {};
     this.resetQuestionView();
     this.onChange();
   }
@@ -128,6 +131,24 @@ export class PresenterState {
   setFontSize(size: number): void {
     if (!Number.isFinite(size)) return;
     this.value.fontSize = Math.max(10, Math.min(72, Math.round(size * 2) / 2));
+    this.onChange();
+  }
+
+  currentFigureScaleOverride(): number | null {
+    const id = this.question?.id;
+    if (!id) return null;
+    return this.value.figureScaleOverrides[id] ?? null;
+  }
+
+  setFigureScaleOverride(value: number | null): void {
+    const id = this.question?.id;
+    if (!id) return;
+
+    const next = { ...this.value.figureScaleOverrides };
+    if (value === null || !Number.isFinite(value)) delete next[id];
+    else next[id] = Math.max(0.5, Math.min(2, Math.round(value * 100) / 100));
+
+    this.value.figureScaleOverrides = next;
     this.onChange();
   }
 

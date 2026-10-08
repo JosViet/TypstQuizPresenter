@@ -54,3 +54,18 @@
 - slide scroll position is restored after returning from background
 - running timer pauses on background and keeps its remaining seconds
 - timer stays paused after return until the teacher starts it again
+
+
+## Figure UX
+
+- 30pt text renders instrumented figures at 100% in Auto mode
+- 36pt text renders instrumented figures at 120% in Auto mode
+- Auto scale clamps at 70% minimum and 150% maximum
+- manual 80/100/120/140 override affects only the current question and is restored when returning to it
+- immini figure content is wrapped once; nested canvas is not double-scaled
+- standalone canvas is clickable and scalable
+- tapping a figure opens a zoom overlay without navigating away
+- tapping the enlarged figure/backdrop closes the overlay
+- changing question or re-rendering closes any active zoom overlay
+- MCQ/TF links remain interactive and are not mistaken for figure links
+- nested choice inside immini leaves a balanced, renderable stem

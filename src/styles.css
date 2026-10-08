@@ -50,7 +50,8 @@ textarea { min-height:180px; resize:vertical; font-family:ui-monospace,SFMono-Re
 .slide-shell .placeholder { min-height:100%; display:grid; place-items:center; padding:36px; text-align:center; color:#64748b; }
 .slide-shell svg { display:block; width:100%; height:auto; min-height:0; }
 .slide-shell a[href*="quiz.local/choice/"],
-.slide-shell a[href*="quiz.local/tf/"] { cursor:pointer; }
+.slide-shell a[href*="quiz.local/tf/"],
+.slide-shell a[href*="quiz.local/figure"] { cursor:pointer; }
 .status { margin-top:10px; padding:8px 10px; border-radius:8px; background:#f8fafc; font-size:12px; color:#475569; }
 .status.error { background:#fef2f2; color:#991b1b; }
 .stage-wrap:fullscreen { background:#020617; padding:10px; grid-template-rows:auto 1fr; }
@@ -319,4 +320,78 @@ textarea { min-height:180px; resize:vertical; font-family:ui-monospace,SFMono-Re
   }
   .fullscreen-recovery-card strong { font-size:24px; }
   .fullscreen-recovery-card small { font-size:15px; }
+}
+
+.figure-scale-select {
+  width:auto;
+  min-width:86px;
+}
+
+.figure-lightbox {
+  position:absolute;
+  inset:0;
+  z-index:29;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:rgba(2,6,23,.82);
+  backdrop-filter:blur(3px);
+  cursor:zoom-out;
+}
+.figure-lightbox[hidden] { display:none; }
+
+.figure-lightbox-card {
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  gap:10px;
+  width:min(94vw, 1100px);
+  height:min(86vh, 760px);
+  padding:14px;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 30px 90px rgba(2,6,23,.5);
+  overflow:hidden;
+}
+
+.figure-zoom-content {
+  min-height:0;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:12px;
+  background:#fff;
+}
+
+.figure-zoom-svg {
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  display:block;
+}
+
+.figure-zoom-hint {
+  text-align:center;
+  color:#475569;
+  font-size:13px;
+  font-weight:800;
+}
+
+@media (pointer:coarse) {
+  .figure-scale-select {
+    min-width:92px;
+    min-height:46px;
+  }
+  .figure-lightbox {
+    padding:10px;
+  }
+  .figure-lightbox-card {
+    width:96vw;
+    height:88vh;
+    padding:10px;
+    border-radius:14px;
+  }
+  .figure-zoom-hint {
+    font-size:14px;
+  }
 }

@@ -123,8 +123,9 @@ function parseQuestion(
   }
 
   const contentEnd = bodySolutionCall ? bodySolutionCall.start : body.length;
-  const stemEnd = answerIsInBody && answer ? answer.start : contentEnd;
-  const stem = body.slice(0, stemEnd).trim();
+  const stem = answerIsInBody && answer
+    ? `${body.slice(0, answer.start)}${body.slice(answer.end, contentEnd)}`.trim()
+    : body.slice(0, contentEnd).trim();
   const solution = solutionCall?.body?.trim();
   const metadata = parseMetadata(exCall.args);
 

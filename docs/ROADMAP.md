@@ -89,3 +89,14 @@ Deferred until presenter is stable: room code, phone responses, response histogr
 - [x] associate external `#loigiai` with the preceding question;
 - [x] retain support for answer macros nested inside `#ex`;
 - [x] regression fixture matching the Toán 12 dataTN layout.
+
+
+## V0.7 — Figure UX
+
+- [x] auto figure scale linked to presentation font size;
+- [x] safe 70–150% auto clamp with 30pt = 100%;
+- [x] per-question manual overrides: 80/100/120/140%;
+- [x] runtime instrumentation for CeTZ canvas, image and immini figure content;
+- [x] tap figure to open large lightbox; tap again/backdrop to close;
+- [x] preserve surrounding immini markup when an answer macro is nested inside it;
+- [x] regression tests for figure instrumentation, scaling and nested-immini parsing.

@@ -8,6 +8,19 @@
 #let quiz-muted = rgb("#64748b")
 #let quiz-soft = rgb("#f8fafc")
 
+#let quiz-figure(scale-factor: 100%, body) = {
+  link(
+    "https://quiz.local/figure",
+    scale(
+      x: scale-factor,
+      y: scale-factor,
+      origin: center + horizon,
+      reflow: true,
+      body,
+    ),
+  )
+}
+
 #let _quiz-header(number) = block(width: 100%)[
   #box(
     inset: (x: 9pt, y: 2.5pt),

@@ -110,3 +110,27 @@ test('still prefers an answer nested inside the #ex body', () => {
   assert.equal(doc.questions[0]!.choices.findIndex(choice => choice.correct), 1);
   assert.equal(doc.questions[0]!.stem.includes('#choice'), false);
 });
+
+
+test('preserves enclosing immini when answer macro is nested inside it', () => {
+  const source = `
+#ex[
+  #immini(img-width: 40%)[
+    Câu hỏi có hình.
+    #choice([$A$], T[$B$], [$C$], [$D$])
+  ][
+    #canvas(length: 1cm, { })
+  ]
+]
+#loigiai[Giải.]
+`;
+
+  const doc = parseTypstQuiz(source);
+  const q = doc.questions[0]!;
+
+  assert.equal(q.kind, 'mcq');
+  assert.match(q.stem, /#immini/);
+  assert.match(q.stem, /#canvas/);
+  assert.equal(q.stem.includes('#choice'), false);
+  assert.equal(q.choices.findIndex(choice => choice.correct), 1);
+});

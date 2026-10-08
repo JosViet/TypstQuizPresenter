@@ -80,3 +80,27 @@ test('pauseTimer preserves remaining time and clears running state', () => {
   assert.equal(state.value.timerRunning, false);
   assert.equal(state.value.timerRemaining, 17);
 });
+
+
+test('figure scale override is stored per question', () => {
+  const first = makeQuestion('mcq');
+  const second = { ...makeQuestion('mcq'), index: 1, id: 'mcq-2' };
+  const state = new PresenterState(() => {});
+
+  state.setQuestions([first, second]);
+  assert.equal(state.currentFigureScaleOverride(), null);
+
+  state.setFigureScaleOverride(1.4);
+  assert.equal(state.currentFigureScaleOverride(), 1.4);
+
+  state.next();
+  assert.equal(state.currentFigureScaleOverride(), null);
+  state.setFigureScaleOverride(0.8);
+  assert.equal(state.currentFigureScaleOverride(), 0.8);
+
+  state.previous();
+  assert.equal(state.currentFigureScaleOverride(), 1.4);
+
+  state.setFigureScaleOverride(null);
+  assert.equal(state.currentFigureScaleOverride(), null);
+});
