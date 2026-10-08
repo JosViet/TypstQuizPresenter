@@ -101,6 +101,8 @@ test('figure scale override is stored per question', () => {
   state.previous();
   assert.equal(state.currentFigureScaleOverride(), 1.4);
 
+  state.setFigureScaleOverride(2);
+  assert.equal(state.currentFigureScaleOverride(), 2);
   state.setFigureScaleOverride(null);
   assert.equal(state.currentFigureScaleOverride(), null);
 });

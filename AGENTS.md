@@ -49,3 +49,7 @@ The app shell may be hosted publicly because the exercise bank is not part of th
 14. Figure presentation changes must be runtime-only. Do not rewrite upstream `BienSoanTypst` sources merely to resize classroom figures.
 15. Auto figure scaling uses 30pt = 100% and clamps to 70–150%; manual figure overrides are per question.
 16. Figure click instrumentation must not interfere with MCQ/TF answer links.
+
+17. Setup and presentation are separate screens from v0.8: never show the workspace browser while presenting, and automatically enter presentation once a nonempty file is loaded.
+18. Opening the presentation screen must not call the Fullscreen API. Optional teacher-triggered fullscreen may use the API but is not required for a full-width browser-viewport slide.
+19. Figure scaling supports up to 200%, both via overrides and the Auto ceiling.

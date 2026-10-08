@@ -48,7 +48,7 @@ app.innerHTML = `
       <div class="field"><label>Lọc file Typst</label><input id="workspaceFilter" placeholder="Ví dụ: 0C1-B1, dataTN, Toan10..." disabled /></div>
       <div class="field"><label>File trong workspace</label><select id="workspaceFiles" size="9" disabled><option>Chưa có workspace</option></select></div>
       <button class="btn primary full" id="loadWorkspaceFile" disabled>Nạp file đã chọn</button>
-      <button class="btn present full" id="startPresentation" disabled>Bắt đầu trình chiếu</button>
+      <button class="btn present full" id="startPresentation" disabled>Tiếp tục trình chiếu</button>
       <button class="btn full" id="installApp" hidden>Cài app trên thiết bị</button>
     </section>
     <details class="source-card dev-source">
@@ -65,9 +65,9 @@ app.innerHTML = `
       <button class="btn" id="previous">←</button><span class="counter" id="counter">0 / 0</span><button class="btn" id="next">→</button><button class="btn reset-first" id="resetQuiz">↺ Câu 1</button><button class="btn primary" id="reveal">Hiện đáp án</button>
       <span class="spacer"></span><span class="active-source" id="activeSource">Chưa có nguồn</span>
       <label class="muted">Cỡ chữ</label><input id="fontSize" class="font-size-input" type="number" min="10" max="72" step="0.5" value="30" inputmode="decimal" />
-      <label class="muted">Hình</label><select id="figureScale" class="figure-scale-select"><option value="auto" selected>Auto</option><option value="0.8">80%</option><option value="1">100%</option><option value="1.2">120%</option><option value="1.4">140%</option></select>
+      <label class="muted">Hình</label><select id="figureScale" class="figure-scale-select"><option value="auto" selected>Auto</option><option value="0.8">80%</option><option value="1">100%</option><option value="1.2">120%</option><option value="1.4">140%</option><option value="1.6">160%</option><option value="1.8">180%</option><option value="2">200%</option></select>
       <label class="muted">Timer</label><select id="timerSeconds" style="width:auto"><option>30</option><option selected>45</option><option>60</option><option>90</option></select>
-      <button class="btn" id="timerToggle">Start</button><button class="btn" id="timerReset">Reset timer</button><span class="timer" id="timer">00:45</span><button class="btn preparation-only" id="fullscreen">Fullscreen</button><button class="btn presentation-only danger-soft" id="exitPresentation">Thoát</button>
+      <button class="btn" id="timerToggle">Start</button><button class="btn" id="timerReset">Reset timer</button><span class="timer" id="timer">00:45</span><button class="btn presentation-only" id="fullscreen">⛶ Toàn màn hình</button><button class="btn presentation-only setup-link" id="exitPresentation">⚙ Cấu hình</button>
     </div>
     <button class="fullscreen-recovery" id="fullscreenRecovery" type="button" hidden>
       <span class="fullscreen-recovery-card">
@@ -147,16 +147,14 @@ async function requestPresentationFullscreen(): Promise<void> {
   updateFullscreenRecovery();
 }
 
-async function enterPresentation(): Promise<void> {
+function enterPresentation(): void {
   if (!state.value.questions.length) return;
   presentationMode = true;
+  // The presentation is an app screen, not a browser fullscreen session.
+  // Switching tabs/apps must never force an extra fullscreen recovery tap.
   appElement.classList.add('presenting');
   renderApp();
-
-  // Installed PWA/standalone mode already owns the app viewport. Fullscreen API is
-  // only a Chrome-tab fallback.
-  if (!isStandalone()) await requestPresentationFullscreen();
-  else updateFullscreenRecovery();
+  updateFullscreenRecovery();
 }
 
 async function exitPresentation(): Promise<void> {
@@ -413,12 +411,12 @@ async function connectWorkspace(handle: FileSystemDirectoryHandle, requestPermis
 
 async function loadSelectedWorkspaceFile(): Promise<void> {
   if (!workspace) return setStatus('Chưa có workspace local.', true); const path = workspaceSelect.value; if (!path) return setStatus('Chưa chọn file Typst.', true); setStatus(`Đang đọc local: ${path}`);
-  try { sourcePath = path; sourceText = await workspace.readTextSource(path); sourceArea.value = sourceText; pathInput.value = path; activeMode = 'workspace'; renderer.setWorkspace(workspace); const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; localStorage.setItem(LAST_SOURCE_KEY, path); setStatus(`Local · ${path} · tìm thấy ${doc.questions.length} câu hỏi.`); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
+  try { sourcePath = path; sourceText = await workspace.readTextSource(path); sourceArea.value = sourceText; pathInput.value = path; activeMode = 'workspace'; renderer.setWorkspace(workspace); const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; localStorage.setItem(LAST_SOURCE_KEY, path); setStatus(`Local · ${path} · tìm thấy ${doc.questions.length} câu hỏi.`); if (doc.questions.length) enterPresentation(); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
 }
 
 function parseCurrentSource(): void {
   sourceText = sourceArea.value; sourcePath = pathInput.value.trim(); activeMode = workspace ? 'workspace' : 'paste'; renderer.setWorkspace(workspace);
-  try { const doc = parseTypstQuiz(sourceText, sourcePath || undefined); state.setQuestions(doc.questions); lastSlideSignature = ''; setStatus(`Đã parse ${doc.questions.length} câu hỏi.`); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
+  try { const doc = parseTypstQuiz(sourceText, sourcePath || undefined); state.setQuestions(doc.questions); lastSlideSignature = ''; setStatus(`Đã parse ${doc.questions.length} câu hỏi.`); if (doc.questions.length) enterPresentation(); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
 }
 
 $('#chooseWorkspace').addEventListener('click', async () => { try { const handle = await pickWorkspaceDirectory(); await connectWorkspace(handle, true); } catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; setStatus(error instanceof Error ? error.message : String(error), true); } });
@@ -427,13 +425,19 @@ workspaceFilter.addEventListener('input', () => refreshWorkspaceFileList(workspa
 
 $('#loadGithub').addEventListener('click', async () => {
   const path = pathInput.value.trim(); if (!path) return setStatus('Cần nhập đường dẫn file trong BienSoanTypst.', true); setStatus('Đang tải source từ commit GitHub đã pin…');
-  try { renderer.setWorkspace(undefined); activeMode = 'github'; workspace = undefined; sourceText = await upstream.loadTextSource(path); sourcePath = path; sourceArea.value = sourceText; const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; setStatus(`GitHub dev/demo · ${path} · ${doc.questions.length} câu.`); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
+  try { renderer.setWorkspace(undefined); activeMode = 'github'; workspace = undefined; sourceText = await upstream.loadTextSource(path); sourcePath = path; sourceArea.value = sourceText; const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; setStatus(`GitHub dev/demo · ${path} · ${doc.questions.length} câu.`); if (doc.questions.length) enterPresentation(); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
 });
 
 $('#parseSource').addEventListener('click', parseCurrentSource); $('#previous').addEventListener('click', () => state.previous()); $('#next').addEventListener('click', () => state.next()); $('#resetQuiz').addEventListener('click', () => state.resetToFirst()); $('#reveal').addEventListener('click', () => state.reveal()); fontSizeInput.addEventListener('change', () => state.setFontSize(Number(fontSizeInput.value))); figureScaleSelect.addEventListener('change', () => state.setFigureScaleOverride(figureScaleSelect.value === 'auto' ? null : Number(figureScaleSelect.value))); $('#timerSeconds').addEventListener('change', event => state.setTimer(Number((event.target as HTMLSelectElement).value))); $('#timerToggle').addEventListener('click', () => state.toggleTimer()); $('#timerReset').addEventListener('click', () => state.resetTimer());
-startPresentationButton.addEventListener('click', () => void enterPresentation());
+startPresentationButton.addEventListener('click', enterPresentation);
 $('#exitPresentation').addEventListener('click', () => void exitPresentation());
-$('#fullscreen').addEventListener('click', async () => { const target = stageWrapElement; if (!document.fullscreenElement) await target.requestFullscreen(); else await document.exitFullscreen(); });
+$('#fullscreen').addEventListener('click', async () => {
+  if (document.fullscreenElement) {
+    try { await document.exitFullscreen(); } catch { /* Remain in presentation screen. */ }
+  } else {
+    await requestPresentationFullscreen();
+  }
+});
 fullscreenRecoveryButton.addEventListener('click', event => {
   event.preventDefault();
   event.stopPropagation();

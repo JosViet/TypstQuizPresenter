@@ -100,3 +100,15 @@ Deferred until presenter is stable: room code, phone responses, response histogr
 - [x] tap figure to open large lightbox; tap again/backdrop to close;
 - [x] preserve surrounding immini markup when an answer macro is nested inside it;
 - [x] regression tests for figure instrumentation, scaling and nested-immini parsing.
+
+
+## V0.8 — Configuration page and wide presentation
+
+- [x] make configuration a dedicated full-width page, not a persistent sidebar;
+- [x] auto-open the presentation screen after selecting a valid bank;
+- [x] explicit configuration return button, preserving loaded question state;
+- [x] remove automatic Fullscreen API requests from the presentation entry flow;
+- [x] retain explicit user-initiated fullscreen as an option;
+- [x] expose 160/180/200% manual figure overrides;
+- [x] extend Auto figure scaling ceiling to 200%;
+- [x] update PWA cache version and add UI contract regression tests.

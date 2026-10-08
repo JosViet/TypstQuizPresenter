@@ -18,7 +18,7 @@ export function resolveFigureScale(fontSize: number, override?: number | null): 
   }
 
   const safeFont = Number.isFinite(fontSize) ? fontSize : 30;
-  return Math.max(0.7, Math.min(1.5, Math.round((safeFont / 30) * 100) / 100));
+  return Math.max(0.7, Math.min(2, Math.round((safeFont / 30) * 100) / 100));
 }
 
 function toPercent(scale: number): number {

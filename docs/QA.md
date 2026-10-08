@@ -77,3 +77,15 @@
 - the CI Typst smoke file asserts this typography inside a CeTZ figure and compiles an actual CeTZ drawing
 - resizing the complete figure scales both geometry and labels uniformly, without inheriting the question font size
 - manual visual check: Toan12/dataDVKT/2C2-B6-DVKT5.typ, question 9 with point labels A', B', C', D'
+
+
+## v0.8 setup/presentation screen flow
+
+- On initial load the configuration screen is full-width; quiz stage is hidden
+- Loading a valid local Typst file auto-switches to the slide-only screen without requesting fullscreen
+- Leaving for another Android app and returning does not alter the app's presentation screen
+- The toolbar offers a configuration return control and an explicit optional fullscreen control
+- Returning to configuration does not discard the current question; continuing restores the same question
+- Empty or failed parses do not auto-enter presentation
+- Figure manual overrides list 160%, 180% and 200%; Auto can reach 200% at 60pt
+- Test at Galaxy Tab S10 landscape and Chrome tab after switching to classroom name picker/score app

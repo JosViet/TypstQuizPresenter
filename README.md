@@ -2,7 +2,7 @@
 
 A teacher-led classroom quiz presenter for question banks authored in Typst.
 
-## Privacy-first architecture (v0.7)
+## Privacy-first architecture (v0.8)
 
 The production/classroom workflow is **local-first**:
 
@@ -150,3 +150,14 @@ Adjacent `#choice`, `#choiceTF`, `#shortanswer` and `#loigiai` are associated wi
 - CeTZ figures in the large-font quiz stem now use the original document's 11pt label typography *inside the figure* before the complete figure is scaled.
 - This prevents point labels (A', B', C', D', etc.) from inheriting 30–36pt slide text while coordinates remain tied to fixed CeTZ units.
 - Figure-scale Auto and per-question overrides continue to scale geometry and labels uniformly.
+
+
+## v0.8 — Separate setup and presentation screens
+
+1. Open the configuration screen to select/reopen a local workspace and choose a Typst source.
+2. Once a valid source with questions is loaded, the app switches **automatically** to the dedicated presentation screen. The workspace browser disappears completely.
+3. Return to setup using **⚙ Cấu hình** in the presentation toolbar. The current question is retained when returning to the slide.
+4. **⛶ Toàn màn hình** is an optional user-triggered action. Presentation never invokes browser fullscreen automatically; after changing browser tabs, the large presentation screen remains active without a recovery interaction.
+5. Figures can be overridden individually up to **200%**, including 160%, 180% and 200%. Auto scale also supports 200% at 60pt+, keeping 30pt=100%.
+
+The host browser address/tab bars are still controlled by Android/Chrome; only an installed PWA or optional Fullscreen API can hide them.
