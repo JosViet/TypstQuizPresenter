@@ -97,3 +97,12 @@
 - The MCQ option reserves font-relative vertical padding so numerator and denominator do not touch/overflow the rounded choice border.
 - Typst CLI smoke includes the exact math pattern and checks minimum measured option height.
 - Check at 24/30/36pt on Galaxy Tab S10; regular text options should still align badges vertically.
+
+
+## v0.8.2 — True/false fraction and row layout
+
+- Compile a TF exercise containing `$dfrac(a^2,2)$` and a negative fraction at 30pt.
+- The `a/b/c/d` labels, statements and Đ/S buttons remain vertically centered for both short and multi-line statements.
+- 30pt and 36pt isolated row measurements grow appropriately, with a minimum height guarding against a return to 7pt padding.
+- Reveal styling/individual Đ/S touch selections continue to work.
+- Retest on Galaxy Tab S10 with an actual Toán 12 TF question containing tall fractions.

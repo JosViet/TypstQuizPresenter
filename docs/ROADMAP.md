@@ -112,3 +112,11 @@ Deferred until presenter is stable: room code, phone responses, response histogr
 - [x] expose 160/180/200% manual figure overrides;
 - [x] extend Auto figure scaling ceiling to 200%;
 - [x] update PWA cache version and add UI contract regression tests.
+
+
+## V0.8.2 — True/false visual spacing
+
+- [x] bring true/false card vertical spacing in line with multiple-choice math options;
+- [x] vertically center TF labels, content and Đ/S buttons for multi-line statements;
+- [x] add Typst smoke regression with tall fractions and row height comparison;
+- [x] bump PWA cache to ship the styling change.

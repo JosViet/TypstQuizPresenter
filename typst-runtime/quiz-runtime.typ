@@ -267,6 +267,51 @@
   )
 }
 
+// Keep the entire true/false statement row comfortably inside the border
+// when inline math has tall numerators or denominators. Align the statement,
+// letter and buttons around the same vertical center, even on multi-line rows.
+#let _quiz-tf-row(
+  label,
+  statement,
+  index: 0,
+  truth: false,
+  selected: none,
+  reveal: false,
+  font-size: 30pt,
+) = block(
+  width: 100%,
+  inset: (x: 11pt, y: calc.max(16pt, font-size * 0.6)),
+  fill: white,
+  stroke: 1pt + quiz-border,
+  radius: 7pt,
+)[
+  #grid(
+    columns: (36pt, 1fr, 58pt, 58pt),
+    column-gutter: 7pt,
+    align: (center + horizon, left + horizon, center + horizon, center + horizon),
+    [#text(size: font-size, weight: "bold", fill: quiz-primary)[#label]],
+    [#text(size: font-size)[#statement]],
+    link(
+      "https://quiz.local/tf/" + str(index) + "/true",
+      _quiz-tf-chip(
+        "Đ",
+        selected: selected == true,
+        correct: truth,
+        reveal: reveal,
+      ),
+    ),
+    link(
+      "https://quiz.local/tf/" + str(index) + "/false",
+      _quiz-tf-chip(
+        "S",
+        selected: selected == false,
+        correct: not truth,
+        reveal: reveal,
+      ),
+    ),
+  )
+]
+
 #let quiz-tf(
   number: 1,
   stem: [],
@@ -286,42 +331,15 @@
   v(9pt)
 
   for (i, statement) in statements.enumerate() {
-    let truth = truths.at(i, default: false)
-    let selected = selections.at(i, default: none)
-
-    block(
-      width: 100%,
-      inset: 7pt,
-      fill: white,
-      stroke: 1pt + quiz-border,
-      radius: 7pt,
-    )[
-      #grid(
-        columns: (36pt, 1fr, 58pt, 58pt),
-        column-gutter: 7pt,
-        align: (center + top, left + top, center, center),
-        [#text(size: fs, weight: "bold", fill: quiz-primary)[#labels.at(i, default: str(i + 1)))]],
-        [#text(size: fs)[#statement]],
-        link(
-          "https://quiz.local/tf/" + str(i) + "/true",
-          _quiz-tf-chip(
-            "Đ",
-            selected: selected == true,
-            correct: truth,
-            reveal: reveal,
-          ),
-        ),
-        link(
-          "https://quiz.local/tf/" + str(i) + "/false",
-          _quiz-tf-chip(
-            "S",
-            selected: selected == false,
-            correct: not truth,
-            reveal: reveal,
-          ),
-        ),
-      )
-    ]
+    _quiz-tf-row(
+      labels.at(i, default: str(i + 1)),
+      statement,
+      index: i,
+      truth: truths.at(i, default: false),
+      selected: selections.at(i, default: none),
+      reveal: reveal,
+      font-size: fs,
+    )
     v(6pt)
   }
 

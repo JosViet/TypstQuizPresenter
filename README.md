@@ -167,3 +167,10 @@ The host browser address/tab bars are still controlled by Android/Chrome; only a
 
 - Increased measured vertical inset in MCQ option cards, proportional to the font size, to prevent large mathematical fractions from protruding outside choice borders.
 - Added a real Typst regression using the fraction layout from Toán 12 question 12; original source files remain unchanged.
+
+
+### v0.8.2 — True/false math card spacing
+
+- True/false statements now receive font-relative vertical padding (matching MCQ options) so large fractions stay inside the bordered card.
+- Each statement's letter, formula content, and two Đ/S chips share vertical-centered grid alignment, including multi-line statements.
+- True/false selected/correct/wrong behavior and question-bank sources are unchanged.

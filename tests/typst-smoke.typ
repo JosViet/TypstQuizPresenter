@@ -1,6 +1,6 @@
 #import "@preview/cetz:0.5.2": canvas as cetz-canvas, draw as cetz-draw
 #let draw = cetz-draw
-#import "../typst-runtime/quiz-runtime.typ": quiz-mcq, quiz-tf, quiz-short, quiz-figure, _quiz-option
+#import "../typst-runtime/quiz-runtime.typ": quiz-mcq, quiz-tf, quiz-short, quiz-figure, _quiz-option, _quiz-tf-row
 
 #quiz-mcq(
   number: 1,
@@ -122,4 +122,35 @@
   let rendered = _quiz-option("B", [$dfrac(a^2, 2)$], font-size: 30pt)
   let measured = measure(rendered, width: 340pt)
   assert(measured.height > 62pt)
+}
+
+
+#pagebreak()
+
+// Regression: true/false statements can contain the same tall fractions as MCQ.
+#quiz-tf(
+  number: 13,
+  stem: [Cho tứ diện đều $A B C D$. Xét các mệnh đề sau.],
+  statements: (
+    [$arrow(A B) dot arrow(C D) = dfrac(a^2, 2)$],
+    [Với $a > 0$, giá trị biểu thức $-dfrac(a^2, 2)$ là số âm.],
+    [Một mệnh đề dài xuống nhiều dòng để kiểm tra canh giữa nhãn và hai nút Đúng, Sai khi ô tự tăng chiều cao theo nội dung.],
+    [$dfrac(a^2, 2) > 0$],
+  ),
+  truths: (false, true, true, true,),
+  selections: (true, false, none, none,),
+  reveal: true,
+  solution: [],
+  show-solution: false,
+  font-size: 30pt,
+)
+
+// A tall inline formula needs extra inset; a 7pt-row should fail this check.
+#context {
+  let row30 = _quiz-tf-row("a", [$dfrac(a^2, 2)$], index: 0, font-size: 30pt)
+  let row36 = _quiz-tf-row("a", [$dfrac(a^2, 2)$], index: 0, font-size: 36pt)
+  let h30 = measure(row30, width: 340pt).height
+  let h36 = measure(row36, width: 340pt).height
+  assert(h30 > 70pt)
+  assert(h36 > h30)
 }
