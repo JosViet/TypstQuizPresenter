@@ -69,3 +69,11 @@
 - changing question or re-rendering closes any active zoom overlay
 - MCQ/TF links remain interactive and are not mistaken for figure links
 - nested choice inside immini leaves a balanced, renderable stem
+
+
+## CeTZ figure label regression (v0.7.2)
+
+- the 30pt quiz stem still displays a CeTZ figure whose internal label text is 11pt before scaling
+- the CI Typst smoke file asserts this typography inside a CeTZ figure and compiles an actual CeTZ drawing
+- resizing the complete figure scales both geometry and labels uniformly, without inheriting the question font size
+- manual visual check: Toan12/dataDVKT/2C2-B6-DVKT5.typ, question 9 with point labels A', B', C', D'

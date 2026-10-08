@@ -143,3 +143,10 @@ Adjacent `#choice`, `#choiceTF`, `#shortanswer` and `#loigiai` are associated wi
 - Presenter instrumentation wraps CeTZ `#canvas`, direct `#image`, and the figure body of `#immini` without modifying `BienSoanTypst`.
 - Tapping a rendered figure opens a large in-app lightbox. Tapping the enlarged figure or backdrop closes it.
 - Answer macros nested inside `#immini` are removed from the stem without breaking the surrounding figure layout.
+
+
+### v0.7.2 — CeTZ label scale fix
+
+- CeTZ figures in the large-font quiz stem now use the original document's 11pt label typography *inside the figure* before the complete figure is scaled.
+- This prevents point labels (A', B', C', D', etc.) from inheriting 30–36pt slide text while coordinates remain tied to fixed CeTZ units.
+- Figure-scale Auto and per-question overrides continue to scale geometry and labels uniformly.
