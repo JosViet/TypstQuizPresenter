@@ -95,6 +95,9 @@
 
 #pagebreak()
 
+// The production upstream de-thi.typ defines dfrac; use native Typst frac in this independent fixture.
+#let dfrac = math.frac
+
 // Regression: display-sized fractions must not protrude outside MCQ options.
 #quiz-mcq(
   number: 12,
