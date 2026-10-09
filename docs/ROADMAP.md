@@ -120,3 +120,14 @@ Deferred until presenter is stable: room code, phone responses, response histogr
 - [x] vertically center TF labels, content and Đ/S buttons for multi-line statements;
 - [x] add Typst smoke regression with tall fractions and row height comparison;
 - [x] bump PWA cache to ship the styling change.
+
+
+## v0.8.3 — Navigation bugfix
+
+- [x] prevent hidden Typst compilation in the Configuration screen;
+- [x] atomic nonempty-bank load before replacing the active lesson;
+- [x] keep previous lesson available if a new file is invalid;
+- [x] serialize WASM render operations;
+- [x] preserve reload of the same edited source path;
+- [x] regression checks for load B and continue presentation;
+- [x] bump service-worker cache for tablets.

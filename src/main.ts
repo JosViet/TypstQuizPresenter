@@ -1,5 +1,5 @@
 import './styles.css';
-import { parseTypstQuiz } from './parser/typstQuizParser.ts';
+import { parseLoadableQuiz } from './presenter/loadQuiz.ts';
 import type { QuizQuestion } from './model/quiz.ts';
 import { PresenterState } from './presenter/presenterState.ts';
 import { LocalWorkspace } from './runtime/localWorkspace.ts';
@@ -16,6 +16,7 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 const renderer = new TypstQuizRenderer();
 const upstream = new UpstreamClient();
 let renderRevision = 0;
+let sourceLoadRevision = 0;
 let lastSlideSignature = '';
 let sourcePath = '';
 let sourceText = '';
@@ -160,12 +161,15 @@ function enterPresentation(): void {
 async function exitPresentation(): Promise<void> {
   presentationMode = false;
   fullscreenWasActive = false;
+  // Cancel any old slide update before opening the setup screen.
+  renderRevision += 1;
+  lastSlideSignature = '';
   appElement.classList.remove('presenting');
   updateFullscreenRecovery();
+  renderApp();
   if (document.fullscreenElement) {
     try { await document.exitFullscreen(); } catch { /* Ignore browser-specific fullscreen exit errors. */ }
   }
-  renderApp();
 }
 function escapeHtml(value: string): string { return value.replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch] ?? ch)); }
 
@@ -385,7 +389,13 @@ function renderApp(): void {
   ($('#timerSeconds') as HTMLSelectElement).value = String(state.value.timerSeconds); $('#timer').textContent = formatTime(state.value.timerRemaining); $('#timer').classList.toggle('danger', state.value.timerRemaining <= 10); ($('#timerToggle') as HTMLButtonElement).textContent = state.value.timerRunning ? 'Pause' : 'Start'; $('#activeSource').textContent = activeSourceLabel();
   startPresentationButton.disabled = state.value.questions.length === 0;
   appElement.classList.toggle('presenting', presentationMode);
-  renderQuestionList(); $('#status').textContent = statusMessage; $('#status').classList.toggle('error', statusError); void renderSlide();
+  renderQuestionList();
+  $('#status').textContent = statusMessage;
+  $('#status').classList.toggle('error', statusError);
+  // Never compile while the setup screen hides the slide. The previous code
+  // compiled once during setQuestions() and again during enterPresentation(),
+  // racing on the same Typst WASM compiler when switching lessons.
+  if (presentationMode) void renderSlide();
 }
 
 function refreshWorkspaceFileList(filter = ''): void {
@@ -404,19 +414,77 @@ function updateWorkspaceInfo(message: string, connected: boolean): void { const 
 async function connectWorkspace(handle: FileSystemDirectoryHandle, requestPermission: boolean): Promise<void> {
   const candidate = new LocalWorkspace(handle); const permission = await candidate.permission(requestPermission); if (permission !== 'granted') throw new Error('Chưa được cấp quyền đọc workspace local.');
   const validation = await candidate.validate(); if (!validation.ok) throw new Error(`Thư mục này chưa phải root BienSoanTypst. Thiếu: ${validation.missing.join(', ')}`);
-  setStatus(`Đang quét file .typ trong ${candidate.name}…`); const files = await candidate.listTypstFiles(); workspace = candidate; workspaceFiles = files; activeMode = 'workspace'; renderer.setWorkspace(candidate); workspaceFilter.disabled = false; workspaceFilter.value = ''; refreshWorkspaceFileList(); updateWorkspaceInfo(`${candidate.name} · ${files.length} file .typ · chỉ đọc local`, true); setStatus(`Đã kết nối workspace local "${candidate.name}". Nội dung không được upload lên server.`);
+  setStatus(`Đang quét file .typ trong ${candidate.name}…`); const files = await candidate.listTypstFiles(); sourceLoadRevision += 1; workspace = candidate; workspaceFiles = files; activeMode = 'workspace'; renderer.setWorkspace(candidate); workspaceFilter.disabled = false; workspaceFilter.value = ''; refreshWorkspaceFileList(); updateWorkspaceInfo(`${candidate.name} · ${files.length} file .typ · chỉ đọc local`, true); setStatus(`Đã kết nối workspace local "${candidate.name}". Nội dung không được upload lên server.`);
   try { await saveWorkspaceHandle(handle); recentHandle = handle; recentWorkspaceButton.disabled = false; recentWorkspaceButton.textContent = `Mở lại: ${handle.name}`; } catch { setStatus(`Đã mở "${candidate.name}", nhưng trình duyệt không lưu được workspace gần đây. Phiên hiện tại vẫn dùng bình thường.`); }
   renderApp();
 }
 
 async function loadSelectedWorkspaceFile(): Promise<void> {
-  if (!workspace) return setStatus('Chưa có workspace local.', true); const path = workspaceSelect.value; if (!path) return setStatus('Chưa chọn file Typst.', true); setStatus(`Đang đọc local: ${path}`);
-  try { sourcePath = path; sourceText = await workspace.readTextSource(path); sourceArea.value = sourceText; pathInput.value = path; activeMode = 'workspace'; renderer.setWorkspace(workspace); const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; localStorage.setItem(LAST_SOURCE_KEY, path); setStatus(`Local · ${path} · tìm thấy ${doc.questions.length} câu hỏi.`); if (doc.questions.length) enterPresentation(); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
+  const selectedWorkspace = workspace;
+  if (!selectedWorkspace) {
+    setStatus('Chưa có workspace local.', true);
+    return;
+  }
+  const path = workspaceSelect.value;
+  if (!path) {
+    setStatus('Chưa chọn file Typst.', true);
+    return;
+  }
+
+  const requestId = ++sourceLoadRevision;
+  workspaceLoadButton.disabled = true;
+  setStatus(`Đang đọc local: ${path}`);
+
+  try {
+    // Read and validate without mutating the active lesson. A failure leaves
+    // the existing questions and the "Tiếp tục trình chiếu" button usable.
+    const candidateText = await selectedWorkspace.readTextSource(path);
+    if (requestId !== sourceLoadRevision) return;
+    const doc = parseLoadableQuiz(candidateText, path);
+
+    // Changing to another file is a transaction: commit only valid questions.
+    // Typst compilation is started only after entering presentation mode.
+    renderRevision += 1;
+    lastSlideSignature = '';
+    sourcePath = path;
+    sourceText = candidateText;
+    sourceArea.value = candidateText;
+    pathInput.value = path;
+    activeMode = 'workspace';
+    // A freshly read file may have changed while keeping the same path.
+    renderer.setWorkspace(selectedWorkspace);
+    state.setQuestions(doc.questions);
+    try { localStorage.setItem(LAST_SOURCE_KEY, path); } catch { /* Storage is optional. */ }
+    setStatus(`Local · ${path} · ${doc.questions.length} câu hỏi. Đang mở trình chiếu.`);
+    enterPresentation();
+  } catch (error) {
+    if (requestId === sourceLoadRevision) {
+      setStatus(error instanceof Error ? error.message : String(error), true);
+    }
+  } finally {
+    if (requestId === sourceLoadRevision) {
+      workspaceLoadButton.disabled = !workspace || filteredWorkspaceFiles.length === 0;
+    }
+  }
 }
 
 function parseCurrentSource(): void {
-  sourceText = sourceArea.value; sourcePath = pathInput.value.trim(); activeMode = workspace ? 'workspace' : 'paste'; renderer.setWorkspace(workspace);
-  try { const doc = parseTypstQuiz(sourceText, sourcePath || undefined); state.setQuestions(doc.questions); lastSlideSignature = ''; setStatus(`Đã parse ${doc.questions.length} câu hỏi.`); if (doc.questions.length) enterPresentation(); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
+  const candidateText = sourceArea.value;
+  const path = pathInput.value.trim();
+  try {
+    const doc = parseLoadableQuiz(candidateText, path || undefined);
+    renderRevision += 1;
+    lastSlideSignature = '';
+    sourceText = candidateText;
+    sourcePath = path;
+    activeMode = workspace ? 'workspace' : 'paste';
+    renderer.setWorkspace(workspace);
+    state.setQuestions(doc.questions);
+    setStatus(`Đã parse ${doc.questions.length} câu hỏi.`);
+    enterPresentation();
+  } catch (error) {
+    setStatus(error instanceof Error ? error.message : String(error), true);
+  }
 }
 
 $('#chooseWorkspace').addEventListener('click', async () => { try { const handle = await pickWorkspaceDirectory(); await connectWorkspace(handle, true); } catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; setStatus(error instanceof Error ? error.message : String(error), true); } });
@@ -424,8 +492,26 @@ recentWorkspaceButton.addEventListener('click', async () => { if (!recentHandle)
 workspaceFilter.addEventListener('input', () => refreshWorkspaceFileList(workspaceFilter.value)); workspaceSelect.addEventListener('dblclick', () => void loadSelectedWorkspaceFile()); workspaceLoadButton.addEventListener('click', () => void loadSelectedWorkspaceFile());
 
 $('#loadGithub').addEventListener('click', async () => {
-  const path = pathInput.value.trim(); if (!path) return setStatus('Cần nhập đường dẫn file trong BienSoanTypst.', true); setStatus('Đang tải source từ commit GitHub đã pin…');
-  try { renderer.setWorkspace(undefined); activeMode = 'github'; workspace = undefined; sourceText = await upstream.loadTextSource(path); sourcePath = path; sourceArea.value = sourceText; const doc = parseTypstQuiz(sourceText, sourcePath); state.setQuestions(doc.questions); lastSlideSignature = ''; setStatus(`GitHub dev/demo · ${path} · ${doc.questions.length} câu.`); if (doc.questions.length) enterPresentation(); } catch (error) { setStatus(error instanceof Error ? error.message : String(error), true); }
+  const path = pathInput.value.trim();
+  if (!path) return setStatus('Cần nhập đường dẫn file trong BienSoanTypst.', true);
+  setStatus('Đang tải source từ commit GitHub đã pin…');
+  try {
+    const candidateText = await upstream.loadTextSource(path);
+    const doc = parseLoadableQuiz(candidateText, path);
+    renderRevision += 1;
+    lastSlideSignature = '';
+    sourceText = candidateText;
+    sourcePath = path;
+    sourceArea.value = candidateText;
+    renderer.setWorkspace(undefined);
+    activeMode = 'github';
+    workspace = undefined;
+    state.setQuestions(doc.questions);
+    setStatus(`GitHub dev/demo · ${path} · ${doc.questions.length} câu.`);
+    enterPresentation();
+  } catch (error) {
+    setStatus(error instanceof Error ? error.message : String(error), true);
+  }
 });
 
 $('#parseSource').addEventListener('click', parseCurrentSource); $('#previous').addEventListener('click', () => state.previous()); $('#next').addEventListener('click', () => state.next()); $('#resetQuiz').addEventListener('click', () => state.resetToFirst()); $('#reveal').addEventListener('click', () => state.reveal()); fontSizeInput.addEventListener('change', () => state.setFontSize(Number(fontSizeInput.value))); figureScaleSelect.addEventListener('change', () => state.setFigureScaleOverride(figureScaleSelect.value === 'auto' ? null : Number(figureScaleSelect.value))); $('#timerSeconds').addEventListener('change', event => state.setTimer(Number((event.target as HTMLSelectElement).value))); $('#timerToggle').addEventListener('click', () => state.toggleTimer()); $('#timerReset').addEventListener('click', () => state.resetTimer());

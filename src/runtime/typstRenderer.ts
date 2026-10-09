@@ -9,12 +9,15 @@ import { UpstreamClient } from './upstreamClient.ts';
 
 export class TypstQuizRenderer {
   private initialized = false;
+  private pendingRender: Promise<void> = Promise.resolve();
+  private runtimeVersion = 0;
   private mountedKey = '';
   private upstream = new UpstreamClient();
   private workspace?: LocalWorkspace;
 
   setWorkspace(workspace?: LocalWorkspace): void {
     this.workspace = workspace;
+    this.runtimeVersion += 1;
     this.mountedKey = '';
   }
 
@@ -31,7 +34,7 @@ export class TypstQuizRenderer {
 
     const provider = this.workspace ?? this.upstream;
     const providerKey = this.workspace ? this.workspace.cacheKey : this.upstream.commit;
-    const key = `${providerKey}:${sourcePath ?? 'pasted'}`;
+    const key = `${this.runtimeVersion}:${providerKey}:${sourcePath ?? 'pasted'}`;
     if (this.mountedKey === key) return;
 
     await $typst.resetShadow();
@@ -47,9 +50,15 @@ export class TypstQuizRenderer {
   }
 
   async render(question: QuizQuestion, options: QuizRenderOptions): Promise<string> {
-    await this.mountRuntime(question.sourcePath);
-    const mainPath = generatedMainPath(question);
-    await $typst.addSource(mainPath, buildQuizDocument(question, options));
-    return $typst.svg({ mainFilePath: mainPath });
+    // All renders share the same mutable WASM/shadow filesystem. Serialize
+    // source mounting and compiling when the teacher switches lessons quickly.
+    const operation = this.pendingRender.then(async () => {
+      await this.mountRuntime(question.sourcePath);
+      const mainPath = generatedMainPath(question);
+      await $typst.addSource(mainPath, buildQuizDocument(question, options));
+      return $typst.svg({ mainFilePath: mainPath });
+    });
+    this.pendingRender = operation.then(() => undefined, () => undefined);
+    return operation;
   }
 }

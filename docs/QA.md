@@ -106,3 +106,14 @@
 - 30pt and 36pt isolated row measurements grow appropriately, with a minimum height guarding against a return to 7pt padding.
 - Reveal styling/individual Đ/S touch selections continue to work.
 - Retest on Galaxy Tab S10 with an actual Toán 12 TF question containing tall fractions.
+
+
+## v0.8.3 — Switching files from Configuration while teaching
+
+- Load a valid file A and enter slide; go to question 3, then tap Cấu hình.
+- Select different valid file B and press Nạp file đã chọn: app must immediately open the B presentation at question 1, with the B question count.
+- Tap Cấu hình then Tiếp tục trình chiếu: app resumes B without re-parsing or requiring browser fullscreen.
+- Try loading a non-quiz `.typ`: show a specific message, retain B questions and keep Tiếp tục trình chiếu enabled.
+- Re-load file B from disk after editing it: renderer refreshes the mounted local source rather than reusing a stale runtime mount.
+- Repeat changes rapidly and verify no competing WASM render/reset failures.
+- Regression tests cover lesson A → lesson B, invalid-bank rollback, hidden-stage compilation guard, and independent continue action.

@@ -174,3 +174,12 @@ The host browser address/tab bars are still controlled by Android/Chrome; only a
 - True/false statements now receive font-relative vertical padding (matching MCQ options) so large fractions stay inside the bordered card.
 - Each statement's letter, formula content, and two Đ/S chips share vertical-centered grid alignment, including multi-line statements.
 - True/false selected/correct/wrong behavior and question-bank sources are unchanged.
+
+
+### v0.8.3 — Switch lessons without reloading the tab
+
+- Configuration mode no longer starts Typst compilation. A valid bank is parsed first; the app switches to presentation and renders once.
+- Reading a different local `.typ` validates a nonempty `#ex` bank before replacing the current lesson. Invalid banks preserve the previous lesson, which remains available through **Tiếp tục trình chiếu**.
+- A serialized Typst WASM render queue prevents concurrent shadow-filesystem resets when the teacher changes lessons or taps quickly.
+- Successful reloads of a previously loaded path invalidate mounted dependencies and re-read the updated local source.
+- Returning to configuration invalidates unfinished slide updates; switching back to presentation keeps the selected quiz.
